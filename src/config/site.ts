@@ -3,9 +3,9 @@ export const siteConfig = {
   shortName: "WDH",
   location: "Egypt",
   email: "journeys@example.com",
-  whatsappNumber: "201000000000",
-  whatsappDisplay: "+20 100 000 0000",
-  instagramUrl: "#",
+  whatsappNumber: "201508731922",
+  whatsappDisplay: "+20 150 873 1922",
+  instagramUrl: "https://www.instagram.com/white_desert_horizons/",
   facebookUrl: "#",
   experiences: [
     "White Desert Overnight",

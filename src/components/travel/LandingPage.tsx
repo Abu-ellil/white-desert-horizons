@@ -22,6 +22,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { navigation, siteConfig } from "@/config/site";
+import { getApprovedTestimonials, submitTestimonial } from "@/lib/testimonials";
+import { Stars } from "@/components/travel/TestimonialStars";
 
 const experienceLinks: Record<string, string> = {
   "White Desert Overnight": "/programs/white-desert-overnight",
@@ -246,6 +248,224 @@ function Gallery() {
   );
 }
 
+const fallbackTestimonials = [
+  {
+    quote: "The night sky over the White Desert is something I will never forget. Everything was private, calm, and perfectly arranged.",
+    name: "Sarah M.",
+    origin: "United Kingdom",
+    trip: "White Desert Overnight",
+    rating: 5,
+  },
+  {
+    quote: "From Cairo to camp, every detail was handled. Sunrise over the chalk formations was worth every minute of the drive.",
+    name: "Karim A.",
+    origin: "Egypt",
+    trip: "White + Black Desert Expedition",
+    rating: 5,
+  },
+  {
+    quote: "Quiet, vast, and beautifully organized. Our guide knew exactly where to be for the best light.",
+    name: "Elena R.",
+    origin: "Italy",
+    trip: "Private Custom Journey",
+    rating: 4,
+  },
+] as const;
+
+type LiveTestimonial = {
+  id: number;
+  name: string;
+  country: string | null;
+  program: string | null;
+  rating: number;
+  quote: string;
+};
+
+function StarInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex gap-1" role="radiogroup" aria-label="Your rating">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          role="radio"
+          aria-checked={value === n}
+          aria-label={`${n} star${n > 1 ? "s" : ""}`}
+          onClick={() => onChange(n)}
+          onMouseEnter={() => setHover(n)}
+          onMouseLeave={() => setHover(0)}
+          className="text-primary transition-transform hover:scale-110"
+        >
+          <svg viewBox="0 0 24 24" className={`h-7 w-7 ${(hover || value) >= n ? "fill-current" : "fill-none stroke-current stroke-[1.5] opacity-40"}`} aria-hidden="true">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ReviewForm() {
+  const [rating, setRating] = useState(0);
+  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [error, setError] = useState("");
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    if (rating < 1) {
+      setStatus("error");
+      setError("Please choose a star rating.");
+      return;
+    }
+    setStatus("submitting");
+    setError("");
+    try {
+      await submitTestimonial({
+        data: {
+          name: String(form.get("name") ?? ""),
+          country: String(form.get("country") ?? ""),
+          program: String(form.get("program") ?? ""),
+          rating,
+          quote: String(form.get("quote") ?? ""),
+        },
+      });
+      setStatus("success");
+    } catch (err) {
+      setStatus("error");
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    }
+  }
+
+  if (status === "success") {
+    return (
+      <div className="reveal mt-16 border border-primary/40 bg-primary/5 p-10 text-center">
+        <p className="section-kicker">Thank you</p>
+        <h3 className="editorial-title mt-4 text-3xl sm:text-4xl">Your review is <em>on its way.</em></h3>
+        <p className="mx-auto mt-4 max-w-md text-sm leading-7 text-muted-foreground">
+          It will appear here shortly, once we&apos;ve had a chance to read it.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="reveal mt-16 border-t border-border pt-12">
+      <div className="mb-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+        <div>
+          <p className="section-kicker">Share your experience</p>
+          <h3 className="editorial-title mt-4 text-3xl sm:text-5xl">Traveled with us?<br /><em>Tell the story.</em></h3>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Your rating</span>
+          <StarInput value={rating} onChange={setRating} />
+        </div>
+      </div>
+      <div className="grid gap-x-6 gap-y-7 sm:grid-cols-2">
+        <Field label="Name" htmlFor="review-name">
+          <Input id="review-name" name="name" required autoComplete="name" placeholder="Your name" className="h-12 rounded-none border-x-0 border-t-0 px-0 shadow-none" />
+        </Field>
+        <Field label="Country (optional)" htmlFor="review-country">
+          <Input id="review-country" name="country" placeholder="e.g. Germany" className="h-12 rounded-none border-x-0 border-t-0 px-0 shadow-none" />
+        </Field>
+        <Field label="Journey (optional)" htmlFor="review-program">
+          <Select name="program">
+            <SelectTrigger id="review-program" className="h-12 rounded-none border-x-0 border-t-0 px-0 shadow-none">
+              <SelectValue placeholder="Which journey was it?" />
+            </SelectTrigger>
+            <SelectContent>
+              {siteConfig.experiences.map((item) => (
+                <SelectItem key={item} value={item}>{item}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <div className="sm:col-span-2">
+          <Field label="Your review" htmlFor="review-quote">
+            <Textarea id="review-quote" name="quote" required rows={4} minLength={10} maxLength={1000} placeholder="What did the desert feel like? What should other travelers know?" className="mt-2 rounded-sm" />
+          </Field>
+        </div>
+        <div className="sm:col-span-2">
+          <Button type="submit" variant="gold" size="journey" disabled={status === "submitting"}>
+            {status === "submitting" ? "Sending…" : "Share your review"} <ArrowRight />
+          </Button>
+          {status === "error" && <p className="mt-4 text-sm text-red-600" role="alert">{error}</p>}
+          <p className="mt-4 text-xs leading-5 text-muted-foreground">
+            Reviews are read by our team before appearing on this page — no account needed.
+          </p>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+function Testimonials() {
+  const [live, setLive] = useState<LiveTestimonial[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    getApprovedTestimonials()
+      .then((rows) => {
+        if (!cancelled) setLive(rows as unknown as LiveTestimonial[]);
+      })
+      .catch(() => {
+        if (!cancelled) setLive([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const items: { key: string; quote: string; name: string; origin: string; trip: string; rating: number }[] =
+    live && live.length > 0
+      ? live.map((t) => ({
+          key: `db-${t.id}`,
+          quote: t.quote,
+          name: t.name,
+          origin: t.country ?? "",
+          trip: t.program ?? "",
+          rating: t.rating,
+        }))
+      : fallbackTestimonials.map((t) => ({
+          key: `fb-${t.name}`,
+          quote: t.quote,
+          name: t.name,
+          origin: t.origin,
+          trip: t.trip,
+          rating: t.rating,
+        }));
+
+  return (
+    <section id="testimonials" className="bg-surface-warm px-5 py-24 sm:px-8 sm:py-32 lg:px-12">
+      <div className="mx-auto max-w-[1260px]">
+        <div className="reveal flex flex-col justify-between gap-8 sm:flex-row sm:items-end">
+          <div>
+            <p className="section-kicker">Traveler stories</p>
+            <h2 className="editorial-title mt-5 text-5xl sm:text-7xl">Words from<br /><em>the desert.</em></h2>
+          </div>
+          <p className="max-w-md text-sm leading-7 text-muted-foreground">Notes from travelers who crossed the White Desert with us.</p>
+        </div>
+        <div className="mt-14 grid gap-px border border-border bg-border md:grid-cols-3">
+          {items.map((t) => (
+            <figure key={t.key} className="reveal flex flex-col bg-surface-warm p-8 sm:p-10">
+              <div className="flex items-start justify-between">
+                <span aria-hidden="true" className="font-serif text-5xl leading-none text-primary/40">"</span>
+                <Stars value={t.rating} />
+              </div>
+              <blockquote className="mt-6 flex-1 font-serif text-xl leading-8">{t.quote}</blockquote>
+              <figcaption className="mt-8 border-t border-border pt-5">
+                <p className="text-sm font-semibold">{t.name}</p>
+                <p className="mt-1 text-[0.63rem] uppercase tracking-[0.18em] text-muted-foreground">{[t.origin, t.trip].filter(Boolean).join(" · ")}</p>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+        <ReviewForm />
+      </div>
+    </section>
+  );
+}
+
 function PlanningForm() {
   const [experience, setExperience] = useState("");
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -257,7 +477,7 @@ function PlanningForm() {
   return (
     <section id="plan" className="bg-background px-5 py-24 sm:px-8 sm:py-32 lg:px-12">
       <div className="mx-auto grid max-w-[1260px] gap-16 lg:grid-cols-[0.75fr_1.25fr] lg:gap-24">
-        <div className="reveal"><p className="section-kicker">Begin a conversation</p><h2 className="editorial-title mt-6 text-5xl sm:text-7xl">Plan your<br /><em>journey.</em></h2><p className="mt-8 max-w-md text-base leading-8 text-muted-foreground">Tell us how you imagine your time in Egypt. We’ll use your details to begin shaping a private White Desert itinerary.</p><div className="mt-10 border-t border-border pt-8"><p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Prefer WhatsApp?</p><Button asChild variant="goldOutline" size="journey" className="mt-4"><a href={`https://wa.me/${siteConfig.whatsappNumber}`} target="_blank" rel="noreferrer"><MessageCircle /> {siteConfig.whatsappDisplay}</a></Button><p className="mt-3 text-xs text-muted-foreground">Placeholder contact — replace in site settings before launch.</p></div></div>
+        <div className="reveal"><p className="section-kicker">Begin a conversation</p><h2 className="editorial-title mt-6 text-5xl sm:text-7xl">Plan your<br /><em>journey.</em></h2><p className="mt-8 max-w-md text-base leading-8 text-muted-foreground">Tell us how you imagine your time in Egypt. We’ll use your details to begin shaping a private White Desert itinerary.</p><div className="mt-10 border-t border-border pt-8"><p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Prefer WhatsApp?</p><Button asChild variant="goldOutline" size="journey" className="mt-4"><a href={`https://wa.me/${siteConfig.whatsappNumber}`} target="_blank" rel="noreferrer"><MessageCircle /> {siteConfig.whatsappDisplay}</a></Button></div></div>
         <form onSubmit={submit} className="reveal grid gap-x-6 gap-y-7 sm:grid-cols-2">
           <Field label="Name" htmlFor="name"><Input id="name" name="name" required autoComplete="name" placeholder="Your name" className="h-12 rounded-none border-x-0 border-t-0 px-0 shadow-none" /></Field>
           <Field label="Email" htmlFor="email"><Input id="email" name="email" type="email" required autoComplete="email" placeholder="you@example.com" className="h-12 rounded-none border-x-0 border-t-0 px-0 shadow-none" /></Field>
@@ -293,11 +513,11 @@ function FinalCTA() {
 
 function Footer() {
   return (
-    <footer className="bg-surface-dark px-5 pb-24 pt-16 text-surface-dark-foreground sm:px-8 sm:pb-10 lg:px-12"><div className="mx-auto max-w-[1440px]"><div className="grid gap-12 border-b border-line-dark pb-12 sm:grid-cols-3"><Brand light /><div><p className="section-kicker">Explore</p><div className="mt-5 flex flex-col gap-3">{navigation.map((item) => <a key={item.href} href={item.href} className="text-sm text-surface-dark-foreground/65 transition-colors hover:text-primary">{item.label}</a>)}</div></div><div><p className="section-kicker">Find us</p><p className="mt-5 text-sm text-surface-dark-foreground/65">Egypt</p><div className="mt-4 flex gap-3"><a href={siteConfig.instagramUrl} aria-label="Instagram placeholder" className="grid h-9 w-9 place-items-center rounded-full border border-line-dark hover:border-primary hover:text-primary"><Instagram className="h-4 w-4" /></a><a href={siteConfig.facebookUrl} aria-label="Social placeholder" className="grid h-9 w-9 place-items-center rounded-full border border-line-dark text-xs font-bold hover:border-primary hover:text-primary">f</a></div></div></div><div className="flex flex-col justify-between gap-3 pt-7 text-[0.62rem] uppercase tracking-[0.14em] text-surface-dark-foreground/45 sm:flex-row"><p>© {new Date().getFullYear()} {siteConfig.name}</p><p>Private desert journeys · Egypt</p></div></div></footer>
+    <footer className="bg-surface-dark px-5 pb-24 pt-16 text-surface-dark-foreground sm:px-8 sm:pb-10 lg:px-12"><div className="mx-auto max-w-[1440px]"><div className="grid gap-12 border-b border-line-dark pb-12 sm:grid-cols-3"><Brand light /><div><p className="section-kicker">Explore</p><div className="mt-5 flex flex-col gap-3">{navigation.map((item) => <a key={item.href} href={item.href} className="text-sm text-surface-dark-foreground/65 transition-colors hover:text-primary">{item.label}</a>)}</div></div><div><p className="section-kicker">Find us</p><p className="mt-5 text-sm text-surface-dark-foreground/65">Egypt</p><div className="mt-4 flex gap-3"><a href={siteConfig.instagramUrl} target="_blank" rel="noreferrer" aria-label="Instagram" className="grid h-9 w-9 place-items-center rounded-full border border-line-dark hover:border-primary hover:text-primary"><Instagram className="h-4 w-4" /></a><a href={siteConfig.facebookUrl} aria-label="Social placeholder" className="grid h-9 w-9 place-items-center rounded-full border border-line-dark text-xs font-bold hover:border-primary hover:text-primary">f</a></div></div></div><div className="flex flex-col justify-between gap-3 pt-7 text-[0.62rem] uppercase tracking-[0.14em] text-surface-dark-foreground/45 sm:flex-row"><p>© {new Date().getFullYear()} {siteConfig.name}</p><p>Private desert journeys · Egypt</p></div></div></footer>
   );
 }
 
 export function LandingPage() {
   useReveal();
-  return <><main><Hero /><Introduction /><Experiences /><AfterSunset /><WhyUs /><Gallery /><PlanningForm /><FAQ /><FinalCTA /></main><Footer /><Button asChild variant="gold" size="journey" className="fixed inset-x-4 bottom-4 z-40 shadow-lg md:hidden"><a href="#plan"><MessageCircle /> Plan your journey</a></Button></>;
+  return <><main><Hero /><Introduction /><Experiences /><AfterSunset /><WhyUs /><Gallery /><Testimonials /><PlanningForm /><FAQ /><FinalCTA /></main><Footer /><Button asChild variant="gold" size="journey" className="fixed inset-x-4 bottom-4 z-40 shadow-lg md:hidden"><a href="#plan"><MessageCircle /> Plan your journey</a></Button></>;
 }
