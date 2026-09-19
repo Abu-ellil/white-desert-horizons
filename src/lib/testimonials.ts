@@ -3,16 +3,16 @@ import { createServerFn } from "@tanstack/react-start";
 /**
  * Server functions for the testimonial system.
  *
- * IMPORTANT: the database module (`@/lib/db`, which uses node:sqlite) is
- * imported DYNAMICALLY inside each handler. The TanStack Start compiler
- * strips handler bodies from the client bundle, so this keeps node-only
- * code out of the browser entirely — a static top-level import here would
- * break client hydration.
+ * IMPORTANT: the database module (`@/lib/db`) is imported DYNAMICALLY
+ * inside each handler — the TanStack Start compiler strips handler bodies
+ * from the client bundle, so this keeps node-only code (mongodb driver)
+ * out of the browser entirely.
  *
- * - Anyone can SUBMIT a review (stored unapproved).
- * - Only approved reviews are shown on the landing page.
- * - Approve/hide/delete is NOT gated behind a login in this first version —
- *   the admin page URL is unlisted. Add real auth before any public launch.
+ * Workflow: submit → pending → admin approves (visible on site) or
+ * rejects (hidden, kept in admin with restore/delete).
+ *
+ * Approve/reject/delete is NOT gated behind a login in this first version —
+ * the admin page URL is unlisted. Add real auth before any public launch.
  */
 
 export const getApprovedTestimonials = createServerFn({ method: "GET" }).handler(
@@ -50,29 +50,30 @@ export const submitTestimonial = createServerFn({ method: "POST" })
     return createTestimonial(data);
   });
 
-function parseId(input: unknown): { id: number } {
-  const id = Number((input as { id?: unknown })?.id);
-  if (!Number.isInteger(id) || id <= 0) throw new Error("Invalid id");
+function parseId(input: unknown): { id: string } {
+  const id = String((input as { id?: unknown })?.id ?? "");
+  if (!/^[a-f\d]{24}$/i.test(id)) throw new Error("Invalid id");
   return { id };
 }
 
-export const approveTestimonial = createServerFn({ method: "POST" })
-  .validator(parseId)
+export const setTestimonialReview = createServerFn({ method: "POST" })
+  .validator((input: unknown) => {
+    const id = String((input as { id?: unknown })?.id ?? "");
+    const status = String((input as { status?: unknown })?.status ?? "");
+    if (!/^[a-f\d]{24}$/i.test(id)) throw new Error("Invalid id");
+    if (status !== "approved" && status !== "rejected" && status !== "pending") {
+      throw new Error("Invalid status");
+    }
+    return { id, status: status as "approved" | "rejected" | "pending" };
+  })
   .handler(async ({ data }) => {
-    const { setTestimonialApproval } = await import("@/lib/db");
-    setTestimonialApproval(data.id, true);
-  });
-
-export const hideTestimonial = createServerFn({ method: "POST" })
-  .validator(parseId)
-  .handler(async ({ data }) => {
-    const { setTestimonialApproval } = await import("@/lib/db");
-    setTestimonialApproval(data.id, false);
+    const { setTestimonialStatus } = await import("@/lib/db");
+    await setTestimonialStatus(data.id, data.status);
   });
 
 export const removeTestimonial = createServerFn({ method: "POST" })
   .validator(parseId)
   .handler(async ({ data }) => {
     const { deleteTestimonial } = await import("@/lib/db");
-    deleteTestimonial(data.id);
+    await deleteTestimonial(data.id);
   });

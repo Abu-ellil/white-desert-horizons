@@ -472,7 +472,6 @@ export function ProgramPage({ program }: { program: TourProgram }) {
             <div>
               <p className="section-kicker">{rtl ? `برنامج ${program.number}` : `Program ${program.number}`}</p>
               <h1 className="editorial-title mt-5 text-5xl sm:text-6xl lg:text-7xl">{title}</h1>
-              {!rtl && <p dir="rtl" className="mt-3 font-serif text-2xl text-surface-dark-foreground/70">{program.titleAr}</p>}
               <p className="mt-6 max-w-xl text-base leading-8 text-surface-dark-foreground/65">{program.subtitle}</p>
             </div>
             <div className="grid gap-px border border-line-dark bg-line-dark sm:grid-cols-3 lg:min-w-[420px]">
