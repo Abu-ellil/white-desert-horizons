@@ -38,3 +38,6 @@ instagram-kit/.venv/
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
+.env*
