@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Media Studio — Design Direction · WHITE DESERT HORIZONS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f1e8;            /* background  oklch(0.955 0.015 86) */
+  --ink:#26241c;           /* foreground */
+  --card:#faf8f0;          /* card */
+  --muted:#8a8577;         /* muted-foreground */
+  --line:#d8d2c0;          /* border */
+  --gold:#c99a4e;          /* primary / gold-muted */
+  --gold-soft:#e0c08e;     /* accent */
+  --warm:#e9dfc9;          /* surface-warm */
+  --dark:#2b2921;          /* surface-dark */
+  --dark-line:#57534a;     /* line-dark */
+  --hero:#211f19;          /* hero-background */
+  --radius:.25rem;
+}
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--ink)}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+img{display:block;max-width:100%}
+em{font-style:italic}
+
+/* ---------- switcher ---------- */
+.sw{position:fixed;top:0;left:0;right:0;height:48px;z-index:99;display:flex;align-items:center;gap:8px;padding:0 16px;background:#26241cf2;backdrop-filter:blur(8px);border-bottom:1px solid #3c392f}
+.sw b{color:#b3ac97;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sw button{color:#cfc9b6;font-size:12px;font-weight:600;letter-spacing:.08em;padding:7px 13px;border:1px solid #4a463a;white-space:nowrap}
+.sw button:hover{border-color:var(--gold);color:var(--gold)}
+.sw button.on{background:var(--gold);border-color:var(--gold);color:#211f19}
+.scene{display:none;margin-top:48px;min-height:calc(100vh - 48px)}
+.scene.on{display:block}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.kicker{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+.serif{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500}
+
+/* ============ DIRECTION 1 — LIGHT EDITORIAL ============ */
+.s1{background:var(--bg);padding:44px 40px 110px}
+.s1 .head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.s1 h1{font-family:'Cormorant Garamond',serif;font-size:56px;line-height:1.05;font-weight:500;margin-top:12px}
+.s1 .sub{color:var(--muted);font-size:14.5px;margin-top:10px;max-width:520px;line-height:1.8}
+.s1 .head-r{display:flex;gap:10px;align-items:center}
+.btn-gold{background:var(--gold);color:#211f19;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:12px 22px}
+.btn-gold:hover{background:#b98a3e}
+.btn-line{border:1px solid var(--line);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:12px 18px;color:var(--ink)}
+.btn-line:hover{border-color:var(--gold);color:var(--gold)}
+.s1 .sets{display:flex;gap:10px;flex-wrap:wrap;margin:30px 0 6px}
+.s1 .set{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--card);padding:7px 18px 7px 7px;cursor:pointer;font-size:12px;font-weight:600;letter-spacing:.04em}
+.s1 .set img{width:30px;height:30px;object-fit:cover}
+.s1 .set span{color:var(--muted);font-weight:500;font-size:11px;margin-left:2px}
+.s1 .set:hover{border-color:var(--gold)}
+.s1 .month{display:flex;align-items:center;gap:18px;margin:44px 0 22px}
+.s1 .month h3{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;white-space:nowrap}
+.s1 .month small{color:var(--muted);font-size:12px;letter-spacing:.08em}
+.s1 .month .rule{flex:1;border-top:1px solid var(--line)}
+.mgrid{columns:3 300px;column-gap:22px}
+.ph{break-inside:avoid;margin-bottom:26px;cursor:pointer}
+.ph .imgw{overflow:hidden;background:var(--warm)}
+.ph img{width:100%;transition:transform .6s ease}
+.ph:hover img{transform:scale(1.035)}
+.s1 .cap{display:flex;gap:12px;border-top:1px solid var(--line);margin-top:10px;padding-top:9px;align-items:baseline}
+.s1 .cap b{font-size:10px;letter-spacing:.18em;color:var(--gold);font-weight:700}
+.s1 .cap div{font-size:13.5px;font-weight:600}
+.s1 .cap small{display:block;color:var(--muted);font-size:11.5px;font-weight:400;margin-top:2px;letter-spacing:.02em}
+.s1 .drop{margin-top:34px;border:1px dashed #c4bda6;padding:26px;text-align:center;color:var(--muted);font-size:13px;letter-spacing:.04em}
+.s1 .drop b{color:var(--ink);font-weight:700}
+.s1 .drop:hover{border-color:var(--gold);color:var(--ink)}
+
+/* lightbox */
+.lb{position:fixed;inset:0;background:#1d1b15d9;z-index:80;display:none;align-items:center;justify-content:center;padding:28px;backdrop-filter:blur(5px)}
+.lb.on{display:flex}
+.lb .box{background:var(--card);display:flex;max-width:960px;width:100%;max-height:82vh}
+.lb .box img{flex:1;min-width:0;object-fit:cover;max-height:82vh}
+.lb .info{width:260px;flex:none;border-left:1px solid var(--line);padding:26px 24px;display:flex;flex-direction:column;gap:12px}
+.lb h4{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600}
+.lb .row{display:flex;justify-content:space-between;font-size:12px;border-bottom:1px solid #e7e2d2;padding-bottom:8px}
+.lb .row span{color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-size:10px;font-weight:700}
+.lb .row b{font-weight:600}
+.lb .act{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.lb .x{position:absolute;top:14px;left:20px;color:#fff;font-size:30px;line-height:1}
+
+/* ============ DIRECTION 2 — DARK GALLERY ============ */
+.s2{--sbg:#211f19;--sline:#3c392f;background:var(--sbg);color:#efeadd;padding:44px 40px 110px}
+.s2 .kick{color:var(--gold-soft)}
+.s2 h1{font-family:'Cormorant Garamond',serif;font-size:54px;font-weight:500;margin-top:12px;line-height:1.05}
+.s2 .top{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.s2 .crumb{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#9a937e}
+.s2 .crumb em{color:var(--gold-soft);font-style:normal}
+.s2 .tools{display:flex;gap:10px}
+.s2 .tbtn{border:1px solid var(--sline);color:#cfc9b6;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:10px 16px}
+.s2 .tbtn:hover{border-color:var(--gold-soft);color:var(--gold-soft)}
+.s2 .tbtn.gold{background:var(--gold);border-color:var(--gold);color:#211f19;font-weight:700}
+.s2 .albums{display:flex;gap:10px;flex-wrap:wrap;margin:26px 0 30px}
+.s2 .alb{display:flex;align-items:center;gap:10px;border:1px solid var(--sline);padding:8px 16px 8px 8px;font-size:12px;font-weight:600;cursor:pointer;color:#e5dfcd}
+.s2 .alb img{width:28px;height:28px;object-fit:cover;filter:saturate(.85)}
+.s2 .alb small{color:#9a937e;font-weight:500}
+.s2 .alb.on,.s2 .alb:hover{border-color:var(--gold-soft)}
+.dgrid{columns:4 250px;column-gap:16px}
+.dgrid .ph{margin-bottom:16px;position:relative;background:#2b2921}
+.dgrid .ph img{transition:transform .5s,opacity .3s;opacity:.94}
+.dgrid .ph:hover img{transform:scale(1.03);opacity:1}
+.dgrid .ov{position:absolute;inset:auto 0 0 0;padding:26px 12px 10px;background:linear-gradient(to top,#17150fd9,transparent);opacity:0;transition:.25s;display:flex;gap:6px}
+.dgrid .ph:hover .ov{opacity:1}
+.dgrid .ov button{background:#ffffff1f;color:#fff;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:6px 10px;backdrop-filter:blur(4px)}
+.dgrid .ov button:hover{background:#ffffff38}
+.dgrid .fav{position:absolute;top:10px;left:10px;width:30px;height:30px;color:#fff;font-size:14px;background:#17150f66;opacity:0;transition:.2s;line-height:1}
+.dgrid .ph:hover .fav{opacity:1}
+.dgrid .fav.on{opacity:1!important;color:var(--gold-soft)}
+.dgrid .meta{position:absolute;top:12px;right:12px;font-size:10px;letter-spacing:.1em;color:#fffd;color:#d9d3bf;opacity:0;transition:.2s;text-transform:uppercase}
+.dgrid .ph:hover .meta{opacity:1}
+.s2 .drop{margin-top:30px;border:1px dashed var(--dark-line);padding:24px;text-align:center;color:#9a937e;font-size:13px}
+.s2 .drop b{color:#efeadd}
+.s2 .drop:hover{border-color:var(--gold-soft)}
+.s2 .toast{position:fixed;bottom:18px;left:18px;z-index:60;width:310px;background:#2b2921;border:1px solid var(--dark-line);padding:14px 16px;box-shadow:0 18px 44px #0008}
+.s2 .toast .t{display:flex;justify-content:space-between;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+.s2 .toast .t i{font-style:normal;color:var(--gold-soft)}
+.s2 .frow{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:11.5px;color:#cfc9b6}
+.s2 .frow .n{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s2 .pbar{width:74px;height:3px;background:#3c392f;flex:none}
+.s2 .pbar i{display:block;height:100%;background:var(--gold)}
+.s2 .st{width:56px;text-align:right;font-size:10px;color:#9a937e;flex:none;letter-spacing:.06em;text-transform:uppercase}
+.s2 .ok{color:#a8c686}
+
+/* ============ DIRECTION 3 — CONTROL PANEL ============ */
+.s3{background:var(--bg);padding:40px 40px 120px}
+.s3 .head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.s3 h1{font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:500;margin-top:10px}
+.s3 h1 em{color:var(--gold)}
+.s3 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:28px 0 34px}
+.s3 .st{background:var(--card);border:1px solid var(--line);padding:16px 18px}
+.s3 .st span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.s3 .st b{display:block;font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;margin-top:6px;line-height:1}
+.s3 .st small{font-size:10.5px;color:var(--gold);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.s3 .bar{height:3px;background:#e5dfcd;margin-top:10px}
+.s3 .bar i{display:block;height:100%;background:var(--gold);width:49%}
+.s3 .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.s3 .search{flex:1;min-width:200px;max-width:340px;border:1px solid var(--line);background:var(--card);padding:10px 14px;font-size:13px;color:var(--muted)}
+.s3 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.s3 .card{background:var(--card);border:1px solid var(--line);cursor:pointer;position:relative;transition:.15s}
+.s3 .card:hover{border-color:#b9b29a}
+.s3 .card.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.s3 .card img{width:100%;height:128px;object-fit:cover}
+.s3 .card .m{padding:10px 12px;border-top:1px solid #e7e2d2}
+.s3 .card .m b{font-size:12px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s3 .card .m span{font-size:10.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.s3 .card .tag{position:absolute;top:8px;right:8px;background:var(--dark);color:var(--gold-soft);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:4px 8px}
+.s3 .card .cb{position:absolute;top:8px;left:8px;width:20px;height:20px;border:1px solid #fff;background:#17150f4d;color:transparent;font-size:11px;display:flex;align-items:center;justify-content:center;opacity:0;transition:.15s}
+.s3 .card:hover .cb{opacity:1}
+.s3 .card.sel .cb{opacity:1;background:var(--gold);border-color:var(--gold);color:#211f19;font-weight:700}
+.s3 .bulk{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:60;background:var(--dark);color:#efeadd;padding:12px 18px;display:none;align-items:center;gap:16px;font-size:12.5px;box-shadow:0 16px 40px #0006}
+.s3 .bulk.show{display:flex}
+.s3 .bulk b{font-weight:600}
+.s3 .bulk button{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#e0c08e;border:1px solid var(--dark-line);padding:8px 14px}
+.s3 .bulk button:hover{border-color:var(--gold-soft)}
+.s3 .bulk button.warn{color:#e2a597}
+.s3 .upq{margin-top:36px;background:var(--card);border:1px solid var(--line);padding:18px 20px}
+.s3 .upq h5{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;display:flex;justify-content:space-between;margin-bottom:12px}
+.s3 .upq h5 span{color:var(--muted);font-weight:500}
+.s3 .frow{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid #e7e2d2;font-size:12.5px}
+.s3 .frow .n{width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.s3 .frow .p{flex:1;height:3px;background:#e5dfcd}
+.s3 .frow .p i{display:block;height:100%;background:var(--gold)}
+.s3 .frow .s{width:130px;text-align:right;font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.s3 .ok{color:#7d9b5a;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="sw">
+  <b>White Desert Horizons — Media Studio</b>
+  <button data-scene="s1" class="on">1 · Light Editorial</button>
+  <button data-scene="s2">2 · Dark Gallery</button>
+  <button data-scene="s3">3 · Control Panel</button>
+</div>
+
+<!-- ============ 1 · LIGHT EDITORIAL ============ -->
+<section id="s1" class="scene s1 on">
+  <div class="head">
+    <div>
+      <p class="kicker">Media Studio</p>
+      <h1>The photo <em>library.</em></h1>
+      <p class="sub">Every photograph from the desert — programs, camps, and guest moments. Organized by trip and month, hosted on Cloudinary.</p>
+    </div>
+    <div class="head-r">
+      <button class="btn-line">By month</button>
+      <button class="btn-gold">↑ Upload photos</button>
+    </div>
+  </div>
+
+  <div class="sets">
+    <div class="set"><img src="src/assets/white-desert-hero.jpg" alt=""><b>White Desert</b><span>48</span></div>
+    <div class="set"><img src="src/assets/white-desert-camp.jpg" alt=""><b>Camps</b><span>36</span></div>
+    <div class="set"><img src="src/assets/white-desert-forms.jpg" alt=""><b>Rock forms</b><span>52</span></div>
+    <div class="set"><img src="src/assets/black-white-desert.jpg" alt=""><b>Black Desert</b><span>27</span></div>
+  </div>
+
+  <div class="month"><h3>September 2026</h3><small>6 photographs</small><div class="rule"></div></div>
+  <div class="mgrid">
+    <div class="ph" data-title="Hero — White Desert"><div class="imgw"><img loading="lazy" src="src/assets/white-desert-hero.jpg" alt=""></div><div class="cap"><b>01</b><div>Hero — White Desert<small>Sep 27 · 4232×2848 · 3.1 MB</small></div></div></div>
+    <div class="ph" data-title="Overnight camp"><div class="imgw"><img loading="lazy" src="src/assets/white-desert-camp.jpg" alt=""></div><div class="cap"><b>02</b><div>Overnight camp<small>Sep 24 · 3000×2250 · 2.4 MB</small></div></div></div>
+    <div class="ph" data-title="Rock formations"><div class="imgw"><img loading="lazy" src="src/assets/white-desert-forms.jpg" alt=""></div><div class="cap"><b>03</b><div>Rock formations<small>Sep 21 · 3840×2560 · 2.9 MB</small></div></div></div>
+    <div class="ph" data-title="Black & white series"><div class="imgw"><img loading="lazy" src="src/assets/black-white-desert.jpg" alt=""></div><div class="cap"><b>04</b><div>Black & white series<small>Sep 18 · 2560×1707 · 1.8 MB</small></div></div></div>
+    <div class="ph" data-title="Camp evening light"><div class="imgw"><img loading="lazy" src="src/assets/white-desert-camp.jpg" alt=""></div><div class="cap"><b>05</b><div>Camp evening light<small>Sep 15 · 3000×2000 · 2.2 MB</small></div></div></div>
+    <div class="ph" data-title="Forms at noon"><div class="imgw"><img loading="lazy" src="src/assets/white-desert-forms.jpg" alt=""></div><div class="cap"><b>06</b><div>Forms at noon<small>Sep 10 · 3840×2160 · 2.6 MB</small></div></div></div>
+  </div>
+
+  <div class="month"><h3>August 2026</h3><small>4 photographs</small><div class="rule"></div></div>
+  <div class="mgrid">
+    <div class="ph" data-title="Dawn departure"><div class="imgw"><img loading="lazy" src="src/assets/white-desert-hero.jpg" alt=""></div><div class="cap"><b>07</b><div>Dawn departure<small>Aug 30 · 4232×2848 · 3.0 MB</small></div></div></div>
+    <div class="ph" data-title="Camp under stars"><div class="imgw"><img loading="lazy" src="src/assets/white-desert-camp.jpg" alt=""></div><div class="cap"><b>08</b><div>Camp under stars<small>Aug 26 · 3000×2250 · 2.1 MB</small></div></div></div>
+    <div class="ph" data-title="Limestone detail"><div class="imgw"><img loading="lazy" src="src/assets/white-desert-forms.jpg" alt=""></div><div class="cap"><b>09</b><div>Limestone detail<small>Aug 20 · 3840×2560 · 2.7 MB</small></div></div></div>
+    <div class="ph" data-title="Monochrome dunes"><div class="imgw"><img loading="lazy" src="src/assets/black-white-desert.jpg" alt=""></div><div class="cap"><b>10</b><div>Monochrome dunes<small>Aug 14 · 2560×1707 · 1.6 MB</small></div></div></div>
+  </div>
+
+  <div class="drop">Drag photographs here or <b>browse your device</b> — uploads go straight to your Cloudinary account</div>
+</section>
+
+<!-- ============ 2 · DARK GALLERY ============ -->
+<section id="s2" class="scene s2">
+  <div class="top">
+    <div>
+      <p class="kicker kick">Media Studio</p>
+      <h1>White Desert <em style="color:var(--gold-soft)">after dark.</em></h1>
+    </div>
+    <div class="tools">
+      <span class="crumb"><em>All albums</em> / White Desert</span>
+      <button class="tbtn">Sort · Newest</button>
+      <button class="tbtn gold">↑ Upload</button>
+    </div>
+  </div>
+
+  <div class="albums">
+    <div class="alb on"><img src="src/assets/white-desert-hero.jpg" alt=""><b>White Desert</b><small>48</small></div>
+    <div class="alb"><img src="src/assets/white-desert-camp.jpg" alt=""><b>Camps</b><small>36</small></div>
+    <div class="alb"><img src="src/assets/white-desert-forms.jpg" alt=""><b>Rock forms</b><small>52</small></div>
+    <div class="alb"><img src="src/assets/black-white-desert.jpg" alt=""><b>Black Desert</b><small>27</small></div>
+  </div>
+
+  <div class="dgrid">
+    <div class="ph"><img loading="lazy" src="src/assets/white-desert-hero.jpg" alt=""><button class="fav">★</button><span class="meta">Sep 27</span><div class="ov"><button>Copy URL</button><button>Download</button><button>Delete</button></div></div>
+    <div class="ph"><img loading="lazy" src="src/assets/white-desert-camp.jpg" alt=""><button class="fav on">★</button><span class="meta">Sep 24</span><div class="ov"><button>Copy URL</button><button>Download</button><button>Delete</button></div></div>
+    <div class="ph"><img loading="lazy" src="src/assets/white-desert-forms.jpg" alt=""><button class="fav">★</button><span class="meta">Sep 21</span><div class="ov"><button>Copy URL</button><button>Download</button><button>Delete</button></div></div>
+    <div class="ph"><img loading="lazy" src="src/assets/black-white-desert.jpg" alt=""><button class="fav">★</button><span class="meta">Sep 18</span><div class="ov"><button>Copy URL</button><button>Download</button><button>Delete</button></div></div>
+    <div class="ph"><img loading="lazy" src="src/assets/white-desert-camp.jpg" alt=""><button class="fav">★</button><span class="meta">Sep 15</span><div class="ov"><button>Copy URL</button><button>Download</button><button>Delete</button></div></div>
+    <div class="ph"><img loading="lazy" src="src/assets/white-desert-forms.jpg" alt=""><button class="fav">★</button><span class="meta">Sep 10</span><div class="ov"><button>Copy URL</button><button>Download</button><button>Delete</button></div></div>
+    <div class="ph"><img loading="lazy" src="src/assets/white-desert-hero.jpg" alt=""><button class="fav">★</button><span class="meta">Sep 06</span><div class="ov"><button>Copy URL</button><button>Download</button><button>Delete</button></div></div>
+    <div class="ph"><img loading="lazy" src="src/assets/white-desert-camp.jpg" alt=""><button class="fav">★</button><span class="meta">Aug 30</span><div class="ov"><button>Copy URL</button><button>Download</button><button>Delete</button></div></div>
+    <div class="ph"><img loading="lazy" src="src/assets/white-desert-forms.jpg" alt=""><button class="fav">★</button><span class="meta">Aug 26</span><div class="ov"><button>Copy URL</button><button>Download</button><button>Delete</button></div></div>
+    <div class="ph"><img loading="lazy" src="src/assets/black-white-desert.jpg" alt=""><button class="fav">★</button><span class="meta">Aug 20</span><div class="ov"><button>Copy URL</button><button>Download</button><button>Delete</button></div></div>
+    <div class="ph"><img loading="lazy" src="src/assets/white-desert-hero.jpg" alt=""><button class="fav">★</button><span class="meta">Aug 14</span><div class="ov"><button>Copy URL</button><button>Download</button><button>Delete</button></div></div>
+    <div class="ph"><img loading="lazy" src="src/assets/white-desert-camp.jpg" alt=""><button class="fav">★</button><span class="meta">Aug 08</span><div class="ov"><button>Copy URL</button><button>Download</button><button>Delete</button></div></div>
+  </div>
+
+  <div class="drop">Drag photographs here or <b>browse your device</b> — uploads go straight to your Cloudinary account</div>
+
+  <div class="toast">
+    <div class="t">Uploading to Cloudinary <i>68%</i></div>
+    <div class="frow"><span class="n">white-desert-hero.jpg</span><div class="pbar"><i style="width:100%"></i></div><span class="st ok">Done ✓</span></div>
+    <div class="frow"><span class="n">camp-evening.jpg</span><div class="pbar"><i style="width:68%"></i></div><span class="st">68%</span></div>
+    <div class="frow"><span class="n">forms-noon.jpg</span><div class="pbar"><i style="width:21%"></i></div><span class="st">21%</span></div>
+  </div>
+</section>
+
+<!-- ============ 3 · CONTROL PANEL ============ -->
+<section id="s3" class="scene s3">
+  <div class="head">
+    <div>
+      <p class="kicker">Admin · Media</p>
+      <h1>Studio <em>control.</em></h1>
+    </div>
+    <div>
+      <button class="btn-line">Select all</button>
+      <button class="btn-gold">↑ Upload photos</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="st"><span>Storage used</span><b>12.4 GB</b><small>of 25 GB free plan</small><div class="bar"><i></i></div></div>
+    <div class="st"><span>Photographs</span><b>163</b><small>+48 this month</small></div>
+    <div class="st"><span>Albums</span><b>4</b><small>by destination</small></div>
+    <div class="st"><span>Bandwidth</span><b>4.1 GB</b><small>of 25 GB</small></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search">Search by name, album, or tag…</div>
+    <button class="btn-line">Filter: All albums</button>
+    <button class="btn-line">Sort: Newest</button>
+  </div>
+
+  <div class="grid">
+    <div class="card"><span class="tag">Hero</span><span class="cb">✓</span><img loading="lazy" src="src/assets/white-desert-hero.jpg" alt=""><div class="m"><b>white-desert-hero.jpg</b><span>White Desert · Sep 27</span></div></div>
+    <div class="card"><span class="tag">Camp</span><span class="cb">✓</span><img loading="lazy" src="src/assets/white-desert-camp.jpg" alt=""><div class="m"><b>overnight-camp.jpg</b><span>Camps · Sep 24</span></div></div>
+    <div class="card sel"><span class="tag">Forms</span><span class="cb">✓</span><img loading="lazy" src="src/assets/white-desert-forms.jpg" alt=""><div class="m"><b>rock-formations.jpg</b><span>Rock forms · Sep 21</span></div></div>
+    <div class="card"><span class="tag">Series</span><span class="cb">✓</span><img loading="lazy" src="src/assets/black-white-desert.jpg" alt=""><div class="m"><b>black-white-01.jpg</b><span>Black Desert · Sep 18</span></div></div>
+    <div class="card"><span class="tag">Camp</span><span class="cb">✓</span><img loading="lazy" src="src/assets/white-desert-camp.jpg" alt=""><div class="m"><b>camp-evening.jpg</b><span>Camps · Sep 15</span></div></div>
+    <div class="card"><span class="tag">Forms</span><span class="cb">&</span><img loading="lazy" src="src/assets/white-desert-forms.jpg" alt=""><div class="m"><b>forms-noon.jpg</b><span>Rock forms · Sep 10</span></div></div>
+    <div class="card"><span class="tag">Hero</span><span class="cb">✓</span><img loading="lazy" src="src/assets/white-desert-hero.jpg" alt=""><div class="m"><b>dawn-departure.jpg</b><span>White Desert · Aug 30</span></div></div>
+    <div class="card"><span class="tag">Camp</span><span class="cb">✓</span><img loading="lazy" src="src/assets/white-desert-camp.jpg" alt=""><div class="m"><b>camp-stars.jpg</b><span>Camps · Aug 26</span></div></div>
+  </div>
+
+  <div class="bulk" id="bulk">
+    <b id="selc">1 selected</b>
+    <button>Move to album</button>
+    <button>Add tag</button>
+    <button class="warn">Delete</button>
+    <button id="bulkClear">Clear</button>
+  </div>
+
+  <div class="upq">
+    <h5>Upload queue <span>3 files · to Cloudinary /white-desert</span></h5>
+    <div class="frow"><span class="n">white-desert-hero.jpg</span><div class="p"><i style="width:100%"></i></div><span class="s ok">Uploaded ✓</span></div>
+    <div class="frow"><span class="n">camp-evening.jpg</span><div class="p"><i style="width:64%"></i></div><span class="s">Uploading… 64%</span></div>
+    <div class="frow"><span class="n">forms-noon.jpg</span><div class="p"><i style="width:0%"></i></div><span class="s">Queued</span></div>
+  </div>
+</section>
+
+<script>
+const $=(q,c=document)=>c.querySelector(q), $$=(q,c=document)=>[...c.querySelectorAll(q)];
+
+/* scene switcher */
+$$('.sw button').forEach(b=>b.addEventListener('click',()=>{
+  $$('.sw button').forEach(x=>x.classList.toggle('on',x===b));
+  $$('.scene').forEach(s=>s.classList.toggle('on',s.id===b.dataset.scene));
+  window.scrollTo({top:0});
+}));
+
+/* nav-ish toggles */
+$$('.sets .set, .albums .alb').forEach(el=>el.addEventListener('click',()=>{
+  const parent=el.parentElement;
+  $$('[class*="set"], [class*="alb"]',parent).forEach(x=>{if(x!==el)x.classList.remove('on')});
+  el.classList.toggle('on');
+}));
+
+/* favorites */
+$$('.fav').forEach(f=>f.addEventListener('click',e=>{e.stopPropagation();f.classList.toggle('on')}));
+
+/* lightbox on editorial scene */
+/* innerHTML below is a static, developer-authored template with no untrusted input — safe by construction */
+const lb=document.createElement('div');
+lb.className='lb';
+lb.innerHTML='<button class="x">×</button><div class="box"><img alt=""><div class="info"><h4></h4>'+
+  '<div class="row"><span>Album</span><b>White Desert</b></div>'+
+  '<div class="row"><span>Date</span><b>Sep 27, 2026</b></div>'+
+  '<div class="row"><span>Dimensions</span><b>4232×2848</b></div>'+
+  '<div class="row"><span>Size</span><b>3.1 MB</b></div>'+
+  '<div class="row"><span>Hosted</span><b>Cloudinary ✓</b></div>'+
+  '<div class="act"><button class="btn-gold">Copy direct URL</button><button class="btn-line">Open in Cloudinary</button></div></div></div>';
+document.body.appendChild(lb);
+$('#s1 .ph').addEventListener&&$$('.s1 .ph').forEach(p=>p.addEventListener('click',()=>{
+  $('img',lb).src=p.querySelector('img').src;
+  $('h4',lb).textContent=p.dataset.title||'';
+  lb.classList.add('on');
+}));
+$('.x',lb).addEventListener('click',()=>lb.classList.remove('on'));
+lb.addEventListener('click',e=>{if(e.target===lb)lb.classList.remove('on')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')lb.classList.remove('on')});
+
+/* bulk select on control panel */
+const bulk=$('#bulk');
+$$('.s3 .card').forEach(c=>c.addEventListener('click',()=>{
+  c.classList.toggle('sel');
+  const n=$$('.s3 .card.sel').length;
+  $('#selc').textContent=n===1?'1 selected':n+' selected';
+  bulk.classList.toggle('show',n>0);
+}));
+$('#bulkClear').addEventListener('click',()=>{
+  $$('.s3 .card.sel').forEach(c=>c.classList.remove('sel'));
+  bulk.classList.remove('show');
+});
+</script>
+</body>
+</html>
