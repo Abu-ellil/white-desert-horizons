@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { trackVisit } from "@/lib/tracking";
 
 function NotFoundComponent() {
   return (
@@ -120,6 +121,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useVisitTracking();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -127,4 +129,23 @@ function RootComponent() {
       <Outlet />
     </QueryClientProvider>
   );
+}
+
+/** Fire-and-forget visit ping on every route change (throttled server-side). */
+function useVisitTracking() {
+  const routerState = useRouter();
+  useEffect(() => {
+    const notifyVisit = (path: string) => {
+      // Skip admin pages — don't notify on my own visits.
+      if (path.startsWith("/admin")) return;
+      trackVisit({ data: { path, ref: typeof document !== "undefined" ? document.referrer : "" } }).catch(
+        () => {},
+      );
+    };
+    notifyVisit(routerState.state.location.pathname);
+    const unsub = routerState.subscribe("onResolved", (evt) => {
+      notifyVisit(evt.toLocation.pathname);
+    });
+    return unsub;
+  }, [routerState]);
 }

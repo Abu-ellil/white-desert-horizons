@@ -53,7 +53,13 @@ export const submitTestimonial = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { createTestimonial } = await import("@/lib/db");
-    return createTestimonial(data);
+    const row = await createTestimonial(data);
+    const { notify } = await import("@/lib/notify");
+    notify(
+      "testimonial",
+      `${data.name}${data.country ? ` (${data.country})` : ""} — ${data.rating}★\n"${data.quote.slice(0, 120)}${data.quote.length > 120 ? "…" : ""}"`,
+    );
+    return row;
   });
 
 function parseId(input: unknown): { id: string } {

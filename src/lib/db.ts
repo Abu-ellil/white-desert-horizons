@@ -52,6 +52,11 @@ loadEnvFallback();
 const globalStore = globalThis as any;
 
 async function getCollection(): Promise<Collection<TestimonialDoc>> {
+  return getAnyCollection("testimonials");
+}
+
+/** Shared pooled client accessor for any collection in the default DB. */
+export async function getAnyCollection(name: string): Promise<Collection<any>> {
   const uri = process.env["MONGODB_URI"];
   if (!uri)
     throw new Error("MONGODB_URI is not set — add it to .env or your host's environment settings.");
@@ -75,7 +80,7 @@ async function getCollection(): Promise<Collection<TestimonialDoc>> {
       throw err;
     }
   }
-  return client.db().collection<TestimonialDoc>("testimonials");
+  return client.db().collection<any>(name);
 }
 
 function toRow(doc: TestimonialDoc): TestimonialRow {

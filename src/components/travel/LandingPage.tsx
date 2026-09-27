@@ -3,6 +3,7 @@ import {
   ArrowDown,
   ArrowRight,
   CalendarDays,
+  Heart,
   Instagram,
   Menu,
   MessageCircle,
@@ -450,6 +451,74 @@ function WhyUs() {
   );
 }
 
+/** Gallery image with a like (heart) button → server fn → Telegram + Mongo. */
+function GalleryImage({
+  photo,
+  src,
+  alt,
+  width,
+  height,
+  caption,
+  className = "",
+}: {
+  photo: string;
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  caption: string;
+  className?: string;
+}) {
+  const [liked, setLiked] = useState(false);
+  const [count, setCount] = useState<number | null>(null);
+
+  async function like() {
+    if (liked) return;
+    const key = `wdh-liked-${photo}`;
+    if (typeof localStorage !== "undefined" && localStorage.getItem(key)) return;
+    setLiked(true);
+    if (typeof localStorage !== "undefined") localStorage.setItem(key, "1");
+    setCount((c) => (c ?? 0) + 1);
+    try {
+      const { likePhoto } = await import("@/lib/likes");
+      const res = await likePhoto({ data: { photo } });
+      if (res && typeof res === "object" && "count" in res && typeof res.count === "number")
+        setCount(res.count);
+    } catch {
+      /* silent — like is best-effort */
+    }
+  }
+
+  return (
+    <figure className={`group relative overflow-hidden ${className}`}>
+      <img
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
+        loading="lazy"
+        className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
+      />
+      <figcaption className="absolute bottom-5 left-5 text-[0.62rem] uppercase tracking-[0.18em] text-hero-foreground">
+        {caption}
+      </figcaption>
+      <button
+        type="button"
+        onClick={like}
+        aria-label={liked ? "Liked" : "Like this photo"}
+        className={`absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.68rem] backdrop-blur-sm transition-all ${
+          liked
+            ? "border-red-400/60 bg-red-500/25 text-red-200"
+            : "border-white/30 bg-black/30 text-white/90 hover:border-red-300/60 hover:text-red-200"
+        }`}
+      >
+        <Heart className={`h-3.5 w-3.5 ${liked ? "fill-current" : ""}`} />
+        {count !== null && count > 0 ? count : ""}
+      </button>
+    </figure>
+  );
+}
+
 function Gallery() {
   return (
     <section id="gallery" className="bg-surface-dark py-24 text-surface-dark-foreground sm:py-32">
@@ -463,58 +532,40 @@ function Gallery() {
         </p>
       </div>
       <div className="grid h-[1150px] grid-cols-2 gap-1 sm:h-[900px] sm:grid-cols-4 sm:grid-rows-2">
-        <figure className="relative col-span-2 overflow-hidden sm:row-span-2">
-          <img
-            src={formsImage}
-            alt="Golden sunrise across mushroom-shaped White Desert formations"
-            width={1600}
-            height={1200}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
-          />
-          <figcaption className="absolute bottom-5 left-5 text-[0.62rem] uppercase tracking-[0.18em] text-hero-foreground">
-            Dawn · White Desert
-          </figcaption>
-        </figure>
-        <figure className="relative overflow-hidden sm:col-span-2">
-          <img
-            src={heroImage}
-            alt="Expansive White Desert Egypt horizon at blue hour"
-            width={1920}
-            height={1280}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
-          />
-          <figcaption className="absolute bottom-5 left-5 text-[0.62rem] uppercase tracking-[0.18em] text-hero-foreground">
-            Last light
-          </figcaption>
-        </figure>
-        <figure className="relative overflow-hidden">
-          <img
-            src={campImage}
-            alt="Warm lanterns at a private White Desert night camp"
-            width={1440}
-            height={1808}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
-          />
-          <figcaption className="absolute bottom-5 left-5 text-[0.62rem] uppercase tracking-[0.18em] text-hero-foreground">
-            Night camp
-          </figcaption>
-        </figure>
-        <figure className="relative overflow-hidden">
-          <img
-            src={contrastImage}
-            alt="Black Desert Egypt volcanic hills overlooking pale chalk terrain"
-            width={1600}
-            height={1200}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
-          />
-          <figcaption className="absolute bottom-5 left-5 text-[0.62rem] uppercase tracking-[0.18em] text-hero-foreground">
-            Black Desert edge
-          </figcaption>
-        </figure>
+        <GalleryImage
+          photo="forms"
+          src={formsImage}
+          alt="Golden sunrise across mushroom-shaped White Desert formations"
+          width={1600}
+          height={1200}
+          caption="Dawn · White Desert"
+          className="col-span-2 sm:row-span-2"
+        />
+        <GalleryImage
+          photo="hero"
+          src={heroImage}
+          alt="Expansive White Desert Egypt horizon at blue hour"
+          width={1920}
+          height={1280}
+          caption="Last light"
+          className="sm:col-span-2"
+        />
+        <GalleryImage
+          photo="camp"
+          src={campImage}
+          alt="Warm lanterns at a private White Desert night camp"
+          width={1440}
+          height={1808}
+          caption="Night camp"
+        />
+        <GalleryImage
+          photo="contrast"
+          src={contrastImage}
+          alt="Black Desert Egypt volcanic hills overlooking pale chalk terrain"
+          width={1600}
+          height={1200}
+          caption="Black Desert edge"
+        />
       </div>
     </section>
   );
@@ -807,22 +858,44 @@ function Testimonials() {
 
 function PlanningForm() {
   const [experience, setExperience] = useState("");
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const message = [
+    const name = String(form.get("name") ?? "");
+    const email = String(form.get("email") ?? "");
+    const date = String(form.get("date") ?? "");
+    const travelers = String(form.get("travelers") ?? "");
+    const message = String(form.get("message") ?? "");
+    // Notify + persist booking request (fire-and-forget), then open WhatsApp.
+    try {
+      const { recordBooking } = await import("@/lib/bookings");
+      recordBooking({
+        data: {
+          name,
+          email,
+          whatsapp: String(form.get("whatsapp") ?? ""),
+          experience,
+          date,
+          travelers,
+          message,
+        },
+      }).catch(() => {});
+    } catch {
+      // never block the WhatsApp handoff
+    }
+    const waMessage = [
       `Hello ${siteConfig.name},`,
       "",
       "I would like to plan a desert journey.",
-      `Name: ${form.get("name") ?? ""}`,
-      `Email: ${form.get("email") ?? ""}`,
+      `Name: ${name}`,
+      `Email: ${email}`,
       `Preferred experience: ${experience || "Not selected"}`,
-      `Travel date: ${form.get("date") ?? "Flexible"}`,
-      `Travelers: ${form.get("travelers") ?? ""}`,
-      `Message: ${form.get("message") ?? ""}`,
+      `Travel date: ${date || "Flexible"}`,
+      `Travelers: ${travelers}`,
+      `Message: ${message}`,
     ].join("\n");
     window.open(
-      `https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(message)}`,
+      `https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(waMessage)}`,
       "_blank",
       "noopener,noreferrer",
     );
