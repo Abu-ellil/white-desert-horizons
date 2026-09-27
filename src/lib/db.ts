@@ -59,9 +59,21 @@ async function getCollection(): Promise<Collection<TestimonialDoc>> {
   if (!client) {
     client = new MongoClient(uri, { serverSelectionTimeoutMS: 8000 });
     globalStore.__wdhMongoClient = client;
-    await client.connect();
-    // Indexes: created once per cold start, idempotent.
-    await client.db().collection("testimonials").createIndex({ status: 1, createdAt: -1 });
+    try {
+      await client.connect();
+      // Indexes: created once per cold start, idempotent.
+      await client.db().collection("testimonials").createIndex({ status: 1, createdAt: -1 });
+    } catch (err) {
+      // CRITICAL: never cache a failed client — a cached broken client makes every
+      // later request throw "Topology is closed" until the lambda recycles.
+      globalStore.__wdhMongoClient = undefined;
+      try {
+        await client.close();
+      } catch {
+        /* ignore */
+      }
+      throw err;
+    }
   }
   return client.db().collection<TestimonialDoc>("testimonials");
 }
