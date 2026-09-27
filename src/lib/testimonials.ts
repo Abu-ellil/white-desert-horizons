@@ -15,36 +15,42 @@ import { createServerFn } from "@tanstack/react-start";
  * the admin page URL is unlisted. Add real auth before any public launch.
  */
 
-export const getApprovedTestimonials = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { listTestimonials } = await import("@/lib/db");
-    return listTestimonials(true);
-  },
-);
+export const getApprovedTestimonials = createServerFn({ method: "GET" }).handler(async () => {
+  const { listTestimonials } = await import("@/lib/db");
+  return listTestimonials(true);
+});
 
-export const getAllTestimonials = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { listTestimonials } = await import("@/lib/db");
-    return listTestimonials(false);
-  },
-);
+export const getAllTestimonials = createServerFn({ method: "GET" }).handler(async () => {
+  const { listTestimonials } = await import("@/lib/db");
+  return listTestimonials(false);
+});
 
 export const submitTestimonial = createServerFn({ method: "POST" })
-  .validator((input: { name?: string; country?: string; program?: string; rating?: number; quote?: string }) => {
-    const name = String(input?.name ?? "").trim();
-    const quote = String(input?.quote ?? "").trim();
-    const rating = Math.round(Number(input?.rating));
-    if (name.length < 2 || name.length > 80) throw new Error("Name must be 2-80 characters");
-    if (quote.length < 10 || quote.length > 1000) throw new Error("Review must be 10-1000 characters");
-    if (!Number.isFinite(rating) || rating < 1 || rating > 5) throw new Error("Rating must be 1-5");
-    return {
-      name,
-      country: input?.country ? String(input.country).trim().slice(0, 80) : null,
-      program: input?.program ? String(input.program).trim().slice(0, 120) : null,
-      rating,
-      quote,
-    };
-  })
+  .validator(
+    (input: {
+      name?: string;
+      country?: string;
+      program?: string;
+      rating?: number;
+      quote?: string;
+    }) => {
+      const name = String(input?.name ?? "").trim();
+      const quote = String(input?.quote ?? "").trim();
+      const rating = Math.round(Number(input?.rating));
+      if (name.length < 2 || name.length > 80) throw new Error("Name must be 2-80 characters");
+      if (quote.length < 10 || quote.length > 1000)
+        throw new Error("Review must be 10-1000 characters");
+      if (!Number.isFinite(rating) || rating < 1 || rating > 5)
+        throw new Error("Rating must be 1-5");
+      return {
+        name,
+        country: input?.country ? String(input.country).trim().slice(0, 80) : null,
+        program: input?.program ? String(input.program).trim().slice(0, 120) : null,
+        rating,
+        quote,
+      };
+    },
+  )
   .handler(async ({ data }) => {
     const { createTestimonial } = await import("@/lib/db");
     return createTestimonial(data);

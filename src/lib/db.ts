@@ -39,7 +39,8 @@ function loadEnvFallback(): void {
     if (!fs.existsSync(envPath)) return;
     for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
       const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-      if (m && m[1] && m[2] !== undefined && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+      if (m && m[1] && m[2] !== undefined && !process.env[m[1]])
+        process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
     }
   } catch {
     // ignore — env var missing will surface as a clear error below
@@ -52,7 +53,8 @@ const globalStore = globalThis as any;
 
 async function getCollection(): Promise<Collection<TestimonialDoc>> {
   const uri = process.env["MONGODB_URI"];
-  if (!uri) throw new Error("MONGODB_URI is not set — add it to .env or your host's environment settings.");
+  if (!uri)
+    throw new Error("MONGODB_URI is not set — add it to .env or your host's environment settings.");
   let client: MongoClient = globalStore.__wdhMongoClient;
   if (!client) {
     client = new MongoClient(uri, { serverSelectionTimeoutMS: 8000 });

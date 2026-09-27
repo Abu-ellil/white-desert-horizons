@@ -14,7 +14,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "White Desert Egypt Tours | WHITE DESERT HORIZONS" },
       {
         property: "og:description",
-        content: "Private journeys into Egypt's White Desert, from sunset camping to tailored expeditions.",
+        content:
+          "Private journeys into Egypt's White Desert, from sunset camping to tailored expeditions.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "/" },

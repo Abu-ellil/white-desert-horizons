@@ -198,7 +198,12 @@
 }
 
 @utility cinematic-overlay {
-  background: linear-gradient(90deg, oklch(0.12 0.01 90 / 72%) 0%, oklch(0.12 0.01 90 / 34%) 48%, oklch(0.12 0.01 90 / 20%) 100%);
+  background: linear-gradient(
+    90deg,
+    oklch(0.12 0.01 90 / 72%) 0%,
+    oklch(0.12 0.01 90 / 34%) 48%,
+    oklch(0.12 0.01 90 / 20%) 100%
+  );
 }
 
 @utility image-shade {
@@ -208,7 +213,9 @@
 @utility reveal {
   opacity: 0;
   transform: translateY(20px);
-  transition: opacity 700ms ease, transform 700ms ease;
+  transition:
+    opacity 700ms ease,
+    transform 700ms ease;
 
   &.is-visible {
     opacity: 1;
@@ -221,12 +228,27 @@
 }
 
 @keyframes soft-pulse {
-  0%, 100% { transform: translateY(0); opacity: 0.45; }
-  50% { transform: translateY(7px); opacity: 1; }
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateY(7px);
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .reveal { opacity: 1; transform: none; transition: none; }
-  .soft-pulse { animation: none; }
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .soft-pulse {
+    animation: none;
+  }
 }

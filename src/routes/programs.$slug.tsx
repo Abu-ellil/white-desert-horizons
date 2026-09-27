@@ -29,7 +29,10 @@ function ProgramRoute() {
     return (
       <main className="bg-background px-6 py-40 text-center">
         <h1 className="editorial-title text-5xl">Program not found.</h1>
-        <a href="/" className="mt-8 inline-block text-sm uppercase tracking-[0.18em] text-primary underline">
+        <a
+          href="/"
+          className="mt-8 inline-block text-sm uppercase tracking-[0.18em] text-primary underline"
+        >
           Back to all journeys
         </a>
       </main>

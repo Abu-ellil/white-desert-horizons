@@ -102,7 +102,9 @@ export const programs: TourProgram[] = [
       { ar: "تذاكر المحمية", en: "National park tickets" },
       { ar: "المخيم والمبيت", en: "Camp and overnight stay" },
     ],
-    excludes: [{ ar: "أي حاجة مش مذكورة في البرنامج", en: "Anything not mentioned in the program" }],
+    excludes: [
+      { ar: "أي حاجة مش مذكورة في البرنامج", en: "Anything not mentioned in the program" },
+    ],
     note: {
       titleAr: "الأسعار",
       titleEn: "Pricing",
@@ -257,8 +259,7 @@ export const programs: TourProgram[] = [
     number: "03",
     titleAr: "واحة سيوة",
     titleEn: "Siwa Oasis",
-    subtitle:
-      "Salt lakes, ancient temples and the Great Sand Sea — Egypt's far western oasis.",
+    subtitle: "Salt lakes, ancient temples and the Great Sand Sea — Egypt's far western oasis.",
     duration: "2–3 days",
     startLabel: "Departs",
     startValue: "Cairo",
@@ -400,7 +401,11 @@ type Lang = "en" | "ar";
 
 function LangSwitch({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
   return (
-    <div className="inline-flex overflow-hidden rounded-full border border-line-dark" role="group" aria-label="Language / اللغة">
+    <div
+      className="inline-flex overflow-hidden rounded-full border border-line-dark"
+      role="group"
+      aria-label="Language / اللغة"
+    >
       {(["en", "ar"] as const).map((l) => (
         <button
           key={l}
@@ -408,7 +413,9 @@ function LangSwitch({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void 
           onClick={() => setLang(l)}
           aria-pressed={lang === l}
           className={`px-5 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.18em] transition-colors ${
-            lang === l ? "bg-primary text-primary-foreground" : "bg-transparent text-surface-dark-foreground/60 hover:text-primary"
+            lang === l
+              ? "bg-primary text-primary-foreground"
+              : "bg-transparent text-surface-dark-foreground/60 hover:text-primary"
           }`}
         >
           {l === "en" ? "EN" : "عربي"}
@@ -423,11 +430,17 @@ function ProgramItinerary({ day, index, lang }: { day: ItineraryDay; index: numb
   return (
     <div className="border-t border-border pt-10" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className={`mb-6 flex items-baseline gap-4 ${lang === "ar" ? "flex-row-reverse" : ""}`}>
-        <span className="font-serif text-4xl text-primary/50">{String(index + 1).padStart(2, "0")}</span>
+        <span className="font-serif text-4xl text-primary/50">
+          {String(index + 1).padStart(2, "0")}
+        </span>
         <h3 className="font-serif text-2xl sm:text-3xl">{day.label}</h3>
       </div>
-      <div className={`rounded-sm border border-border p-6 ${lang === "ar" ? "bg-surface-warm/40" : ""}`}>
-        <ul className={`space-y-2.5 text-sm leading-7 ${lang === "ar" ? "text-right" : "text-muted-foreground"}`}>
+      <div
+        className={`rounded-sm border border-border p-6 ${lang === "ar" ? "bg-surface-warm/40" : ""}`}
+      >
+        <ul
+          className={`space-y-2.5 text-sm leading-7 ${lang === "ar" ? "text-right" : "text-muted-foreground"}`}
+        >
           {lines.map((line, i) => (
             <li key={i}>{line}</li>
           ))}
@@ -460,31 +473,45 @@ export function ProgramPage({ program }: { program: TourProgram }) {
   return (
     <main className="bg-background">
       {/* Hero */}
-      <section className="bg-surface-dark px-5 pb-16 pt-32 text-surface-dark-foreground sm:px-8 sm:pb-20 sm:pt-40 lg:px-12" dir={rtl ? "rtl" : "ltr"}>
+      <section
+        className="bg-surface-dark px-5 pb-16 pt-32 text-surface-dark-foreground sm:px-8 sm:pb-20 sm:pt-40 lg:px-12"
+        dir={rtl ? "rtl" : "ltr"}
+      >
         <div className="mx-auto max-w-[1260px]">
           <div className="flex items-center justify-between">
-            <a href="/" className="inline-flex items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-surface-dark-foreground/60 transition-colors hover:text-primary">
+            <a
+              href="/"
+              className="inline-flex items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-surface-dark-foreground/60 transition-colors hover:text-primary"
+            >
               <ArrowLeft className="h-4 w-4" /> {rtl ? "كل البرامج" : "All programs"}
             </a>
             <LangSwitch lang={lang} setLang={setLang} />
           </div>
           <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
-              <p className="section-kicker">{rtl ? `برنامج ${program.number}` : `Program ${program.number}`}</p>
+              <p className="section-kicker">
+                {rtl ? `برنامج ${program.number}` : `Program ${program.number}`}
+              </p>
               <h1 className="editorial-title mt-5 text-5xl sm:text-6xl lg:text-7xl">{title}</h1>
-              <p className="mt-6 max-w-xl text-base leading-8 text-surface-dark-foreground/65">{program.subtitle}</p>
+              <p className="mt-6 max-w-xl text-base leading-8 text-surface-dark-foreground/65">
+                {program.subtitle}
+              </p>
             </div>
             <div className="grid gap-px border border-line-dark bg-line-dark sm:grid-cols-3 lg:min-w-[420px]">
               {metaRows.map(([label, value]) => (
                 <div key={label} className="bg-surface-dark p-5">
-                  <p className="text-[0.6rem] uppercase tracking-[0.16em] text-surface-dark-foreground/50">{label}</p>
+                  <p className="text-[0.6rem] uppercase tracking-[0.16em] text-surface-dark-foreground/50">
+                    {label}
+                  </p>
                   <p className="mt-2 font-serif text-lg">{value}</p>
                 </div>
               ))}
             </div>
           </div>
           <div className="mt-8 border-t border-line-dark pt-5">
-            <p className="text-[0.63rem] uppercase tracking-[0.18em] text-surface-dark-foreground/50">{program.duration}</p>
+            <p className="text-[0.63rem] uppercase tracking-[0.18em] text-surface-dark-foreground/50">
+              {program.duration}
+            </p>
           </div>
         </div>
       </section>
@@ -497,13 +524,24 @@ export function ProgramPage({ program }: { program: TourProgram }) {
       </section>
 
       {/* Itinerary */}
-      <section className="bg-surface-warm px-5 py-20 sm:px-8 sm:py-24 lg:px-12" dir={rtl ? "rtl" : "ltr"}>
+      <section
+        className="bg-surface-warm px-5 py-20 sm:px-8 sm:py-24 lg:px-12"
+        dir={rtl ? "rtl" : "ltr"}
+      >
         <div className="mx-auto max-w-[1260px]">
           <div className="mb-12 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
               <p className="section-kicker">{rtl ? "البرنامج" : "Itinerary"}</p>
               <h2 className="editorial-title mt-4 text-4xl sm:text-5xl">
-                {rtl ? <>يوم <em>بيوم.</em></> : <>Day by <em>day.</em></>}
+                {rtl ? (
+                  <>
+                    يوم <em>بيوم.</em>
+                  </>
+                ) : (
+                  <>
+                    Day by <em>day.</em>
+                  </>
+                )}
               </h2>
             </div>
             {rtl && <p className="font-serif text-xl text-muted-foreground">البرنامج اليوم بيوم</p>}
@@ -529,7 +567,12 @@ export function ProgramPage({ program }: { program: TourProgram }) {
           )}
 
           {(activeVariant ? activeVariant.days : program.days).map((day, i) => (
-            <ProgramItinerary key={`${activeVariant?.id ?? "main"}-${day.label}`} day={day} index={i} lang={lang} />
+            <ProgramItinerary
+              key={`${activeVariant?.id ?? "main"}-${day.label}`}
+              day={day}
+              index={i}
+              lang={lang}
+            />
           ))}
         </div>
       </section>
@@ -541,9 +584,21 @@ export function ProgramPage({ program }: { program: TourProgram }) {
             {program.includes && (
               <div>
                 <p className="section-kicker">{rtl ? "السعر يشمل" : "What's included"}</p>
-                <h2 className="editorial-title mt-4 text-4xl">{rtl ? <>وضّحنا كل <em>حاجة.</em></> : <>Included, <em>clearly.</em></>}</h2>
+                <h2 className="editorial-title mt-4 text-4xl">
+                  {rtl ? (
+                    <>
+                      وضّحنا كل <em>حاجة.</em>
+                    </>
+                  ) : (
+                    <>
+                      Included, <em>clearly.</em>
+                    </>
+                  )}
+                </h2>
                 <div className="mt-8 border-t border-border">
-                  <h3 className="border-b border-border py-5 font-serif text-xl font-normal">{rtl ? "يشمل" : "Includes"}</h3>
+                  <h3 className="border-b border-border py-5 font-serif text-xl font-normal">
+                    {rtl ? "يشمل" : "Includes"}
+                  </h3>
                   <ul className="divide-y divide-border">
                     {program.includes.map((row) => (
                       <li key={row.en} className="py-3 text-sm leading-7">
@@ -553,7 +608,9 @@ export function ProgramPage({ program }: { program: TourProgram }) {
                   </ul>
                   {program.excludes && (
                     <>
-                      <h3 className="border-b border-border py-5 font-serif text-xl font-normal">{rtl ? "لا يشمل" : "Excludes"}</h3>
+                      <h3 className="border-b border-border py-5 font-serif text-xl font-normal">
+                        {rtl ? "لا يشمل" : "Excludes"}
+                      </h3>
                       <ul className="divide-y divide-border">
                         {program.excludes.map((row) => (
                           <li key={row.en} className="py-3 text-sm leading-7 text-muted-foreground">
@@ -567,12 +624,21 @@ export function ProgramPage({ program }: { program: TourProgram }) {
               </div>
             )}
             {program.note && (
-              <div className="reveal self-start rounded-sm border border-primary/40 bg-primary/5 p-8" dir={rtl ? "rtl" : "ltr"}>
-                <p className="section-kicker">{rtl ? program.note.titleAr : program.note.titleEn}</p>
-                <p className="mt-4 text-base leading-8">{rtl ? program.note.bodyAr : program.note.bodyEn}</p>
+              <div
+                className="reveal self-start rounded-sm border border-primary/40 bg-primary/5 p-8"
+                dir={rtl ? "rtl" : "ltr"}
+              >
+                <p className="section-kicker">
+                  {rtl ? program.note.titleAr : program.note.titleEn}
+                </p>
+                <p className="mt-4 text-base leading-8">
+                  {rtl ? program.note.bodyAr : program.note.bodyEn}
+                </p>
                 {!rtl && program.note.bodyAr && null}
                 <Button asChild variant="goldOutline" size="journey" className="mt-7">
-                  <a href={`/?program=${program.slug}#plan`}>{rtl ? "اسأل عن البرنامج ده" : "Ask about this program"} <ArrowRight /></a>
+                  <a href={`/?program=${program.slug}#plan`}>
+                    {rtl ? "اسأل عن البرنامج ده" : "Ask about this program"} <ArrowRight />
+                  </a>
                 </Button>
               </div>
             )}
@@ -581,13 +647,26 @@ export function ProgramPage({ program }: { program: TourProgram }) {
       )}
 
       {/* CTA */}
-      <section className="bg-surface-dark px-5 py-20 text-center text-surface-dark-foreground sm:px-8" dir={rtl ? "rtl" : "ltr"}>
+      <section
+        className="bg-surface-dark px-5 py-20 text-center text-surface-dark-foreground sm:px-8"
+        dir={rtl ? "rtl" : "ltr"}
+      >
         <p className="section-kicker">{siteConfig.name}</p>
         <h2 className="editorial-title mx-auto mt-5 max-w-3xl text-4xl sm:text-6xl">
-          {rtl ? <>جاهزين لما <em>تكون جاهز.</em></> : <>Ready when <em>you are.</em></>}
+          {rtl ? (
+            <>
+              جاهزين لما <em>تكون جاهز.</em>
+            </>
+          ) : (
+            <>
+              Ready when <em>you are.</em>
+            </>
+          )}
         </h2>
         <Button asChild variant="gold" size="journey" className="mt-9">
-          <a href={`/?program=${program.slug}#plan`}>{rtl ? "خطط للرحلة" : "Plan this journey"} <ArrowRight /></a>
+          <a href={`/?program=${program.slug}#plan`}>
+            {rtl ? "خطط للرحلة" : "Plan this journey"} <ArrowRight />
+          </a>
         </Button>
       </section>
     </main>

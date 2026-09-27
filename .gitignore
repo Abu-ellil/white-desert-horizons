@@ -25,6 +25,9 @@ data/
 .wrangler/
 .dev.vars
 
+# Instagram kit local env + downloaded fonts
+instagram-kit/.venv/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
