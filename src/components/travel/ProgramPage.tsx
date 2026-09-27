@@ -58,7 +58,7 @@ export const programs: TourProgram[] = [
         label: "Day 1",
         ar: [
           "٧:٠٠ صباحاً — التحرك من مكان إقامتك في القاهرة بسيارة خاصة",
-          "الوصول لواحة البهارية بعد حوالي ٤ ساعات — الغداء",
+          "الوصول للواحات البحرية بعد حوالي ٤ ساعات — الغداء",
           "الصحراء السوداء",
           "قرية الحيز والعين الباردة",
           "جبل الكريستال",
@@ -115,7 +115,7 @@ export const programs: TourProgram[] = [
   {
     slug: "bahariya-expedition",
     number: "02",
-    titleAr: "البهارية والصحراء البيضاء — ليلتين",
+    titleAr: "الواحات البحرية والصحراء البيضاء — ليلتين",
     titleEn: "Bahariya & White Desert Expedition",
     subtitle:
       "Three days across the volcanic edge, the dunes and the luminous chalk — in two curated versions.",
@@ -194,7 +194,7 @@ export const programs: TourProgram[] = [
           {
             label: "Day 1",
             ar: [
-              "الانطلاق بالسيارة إلى البهارية — الغداء",
+              "الانطلاق بالسيارة إلى الواحات البحرية — الغداء",
               "الصحراء السوداء",
               "قرية الهيزة (نبع بارد)",
               "جبل الكريستال",
@@ -232,7 +232,7 @@ export const programs: TourProgram[] = [
             ar: [
               "استكشاف الصحراء البيضاء الجديدة (صخور على هيئة حيوانات)",
               "التوجه لمكان الإقامة — التزحلق على الرمال",
-              "العودة لواحة البهارية — الغداء",
+              "العودة للواحات البحرية — الغداء",
               "الانطلاق عائدين إلى القاهرة",
             ],
             en: [

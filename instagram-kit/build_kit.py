@@ -190,7 +190,7 @@ def make_posts():
     finish_photo_post(
         img, d,
         "Bahariya & White Desert",
-        "البهارية والصحراء البيضاء — ليلتين",
+        "الواحات البحرية والصحراء البيضاء — ليلتين",
         "Three days from volcanic ridges to luminous chalk — with Kahf El-Gara cave, or the Magic Spring and sandboarding.",
         "PRIVATE · 3 DAYS · 2 NIGHTS · TWO VERSIONS",
     )
