@@ -73,6 +73,8 @@ export async function createMedia(input: {
   bytes: number;
   album: string;
   tags: string[];
+  title?: string;
+  description?: string;
 }): Promise<MediaRow> {
   const col = await getCollection();
   const doc = {
@@ -84,6 +86,8 @@ export async function createMedia(input: {
     bytes: input.bytes,
     album: input.album,
     tags: input.tags,
+    title: input.title ?? "",
+    description: input.description ?? "",
     favorite: false,
     createdAt: new Date(),
   };

@@ -68,6 +68,12 @@ export const registerUploadedMedia = createServerFn({ method: "POST" })
       bytes: Math.max(0, Math.round(Number(v["bytes"]) || 0)),
       album,
       tags,
+      title: String(v["title"] ?? "")
+        .trim()
+        .slice(0, 80),
+      description: String(v["description"] ?? "")
+        .trim()
+        .slice(0, 500),
     };
   })
   .handler(async ({ data }) => {

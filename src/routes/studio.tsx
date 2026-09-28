@@ -48,6 +48,26 @@ type QueueItem = {
   error?: string;
 };
 
+/**
+ * Strip an image extension for a friendlier default caption ("IMG_2041.jpg"
+ * → "IMG 2041"). Used to pre-fill the per-photo title in the upload dialog.
+ */
+function friendlyName(name: string): string {
+  return name
+    .replace(/\.[a-z0-9]+$/i, "")
+    .replace(/[_-]+/g, " ")
+    .trim();
+}
+
+/** A file picked for upload but not sent yet — captions are editable first. */
+type StagedItem = {
+  key: string;
+  file: File;
+  previewUrl: string;
+  title: string;
+  description: string;
+};
+
 /** Inline title/description editor for one photo (studio-only). */
 function CaptionEditor({
   row,
@@ -131,6 +151,85 @@ function CaptionEditor({
   );
 }
 
+/** One editable row in the pre-upload staging list. */
+function StagingRow({
+  item,
+  busy,
+  onChange,
+  onRemove,
+}: {
+  item: StagedItem;
+  busy: boolean;
+  onChange: (patch: Partial<Pick<StagedItem, "title" | "description">>) => void;
+  onRemove: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="flex items-start gap-3 border-b border-border/60 py-2 last:border-b-0">
+      <img
+        src={item.previewUrl}
+        alt=""
+        className="h-12 w-12 shrink-0 border border-border object-cover"
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <span className="truncate text-xs font-semibold">{item.title || item.file.name}</span>
+          <span className="shrink-0 text-[10px] text-muted-foreground">
+            {formatBytes(item.file.size)}
+          </span>
+        </div>
+        {open ? (
+          <div className="mt-1.5 space-y-1.5">
+            <input
+              value={item.title}
+              disabled={busy}
+              onChange={(e) => onChange({ title: e.target.value })}
+              placeholder="Title (optional)"
+              maxLength={80}
+              className="w-full border border-input bg-background px-2 py-1 text-xs font-semibold text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
+            />
+            <textarea
+              value={item.description}
+              disabled={busy}
+              onChange={(e) => onChange({ description: e.target.value })}
+              placeholder="Description (optional)"
+              maxLength={500}
+              rows={2}
+              className="w-full resize-none border border-input bg-background px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            disabled={busy}
+            className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-primary disabled:opacity-50"
+          >
+            <Pencil className="h-3 w-3" />
+            {item.title || item.description ? "Edit caption" : "Add caption"}
+          </button>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={onRemove}
+        disabled={busy}
+        aria-label={`Remove ${item.file.name} from the upload list`}
+        className="mt-1 text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 /** Shared "you shall not pass" screen — links to the login at /admin. */
 function AccessDenied() {
   return (
@@ -165,7 +264,44 @@ function StudioPage() {
   const [dragOver, setDragOver] = useState(false);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [staged, setStaged] = useState<StagedItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Object URLs are mutable handles — free the blob when a staged row leaves
+  // the list (removed by hand or after its upload starts).
+  const stageFiles = useCallback((files: File[]) => {
+    const images = files.filter((f) => /^image\//.test(f.type));
+    if (images.length === 0) return;
+    setStaged((prev) => [
+      ...prev,
+      ...images.map((file, i) => ({
+        key: `${Date.now()}-${prev.length + i}-${file.name}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+        title: friendlyName(file.name),
+        description: "",
+      })),
+    ]);
+  }, []);
+
+  const removeStaged = useCallback((key: string) => {
+    setStaged((prev) => {
+      const hit = prev.find((x) => x.key === key);
+      if (hit) URL.revokeObjectURL(hit.previewUrl);
+      return prev.filter((x) => x.key !== key);
+    });
+  }, []);
+
+  // Drop blob URLs on unmount so refresh/navigation doesn't leak them.
+  useEffect(
+    () => () => {
+      setStaged((prev) => {
+        for (const x of prev) URL.revokeObjectURL(x.previewUrl);
+        return prev;
+      });
+    },
+    [],
+  );
 
   const refresh = useCallback(async () => {
     setError("");
@@ -288,17 +424,20 @@ function StudioPage() {
     }
   }
 
-  async function uploadFiles(files: File[]) {
-    const images = files.filter((f) => /^image\//.test(f.type));
-    if (images.length === 0) return;
-    const items: QueueItem[] = images.map((file, i) => ({
-      key: `${Date.now()}-${i}-${file.name}`,
-      name: file.name,
-      file,
-      status: "queued",
-      progress: 0,
-    }));
-    setQueue((q) => [...q, ...items]);
+  async function uploadFiles(items: StagedItem[]) {
+    if (items.length === 0) return;
+    setQueue((q) => [
+      ...q,
+      ...items.map((s) => ({
+        key: s.key,
+        name: s.title || s.file.name,
+        file: s.file,
+        status: "queued" as const,
+        progress: 0,
+      })),
+    ]);
+    setStaged([]);
+    for (const s of items) URL.revokeObjectURL(s.previewUrl);
     setUploading(true);
 
     try {
@@ -356,6 +495,8 @@ function StudioPage() {
               bytes: result.bytes,
               album: uploadAlbum,
               tags: [],
+              title: item.title.trim().slice(0, 80),
+              description: item.description.trim().slice(0, 500),
             },
           });
           setQueue((q) =>
@@ -390,7 +531,7 @@ function StudioPage() {
       onDrop={(e) => {
         e.preventDefault();
         setDragOver(false);
-        if (!uploading) void uploadFiles([...e.dataTransfer.files]);
+        if (!uploading) stageFiles([...e.dataTransfer.files]);
       }}
     >
       <div className="mx-auto max-w-[1280px]">
@@ -481,11 +622,64 @@ function StudioPage() {
             multiple
             className="hidden"
             onChange={(e) => {
-              void uploadFiles([...(e.target.files ?? [])]);
+              stageFiles([...(e.target.files ?? [])]);
               e.target.value = "";
             }}
           />
         </div>
+
+        {/* Staging list — pick files, caption them, then start the upload by hand */}
+        {staged.length > 0 && (
+          <div className="mt-4 border border-primary/60 bg-card p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-xs font-bold uppercase tracking-[0.16em]">
+                Ready to upload — {staged.length} {staged.length === 1 ? "photo" : "photos"} →{" "}
+                {uploadAlbum}
+              </h2>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => {
+                    for (const s of staged) URL.revokeObjectURL(s.previewUrl);
+                    setStaged([]);
+                  }}
+                  className="border border-border px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50"
+                >
+                  Clear list
+                </button>
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => void uploadFiles([...staged])}
+                  className="inline-flex items-center gap-2 bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Upload className="h-3.5 w-3.5" />
+                  )}
+                  Start upload
+                </button>
+              </div>
+            </div>
+            <div className="mt-2">
+              {staged.map((item) => (
+                <StagingRow
+                  key={item.key}
+                  item={item}
+                  busy={false}
+                  onChange={(patch) =>
+                    setStaged((prev) =>
+                      prev.map((x) => (x.key === item.key ? { ...x, ...patch } : x)),
+                    )
+                  }
+                  onRemove={() => removeStaged(item.key)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Upload queue */}
         {queue.length > 0 && (
