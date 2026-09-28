@@ -12,6 +12,13 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 // Alias both forms (client + nitro server) straight to the punycode entry file.
 const punycodeEntry = new URL("node_modules/punycode/punycode.js", import.meta.url).pathname;
 
+// `tslib` is left as a bare external import inside the prebuilt _libs chunks
+// (e.g. @radix-ui/react-select) but the prebuilt deploy to Vercel ships
+// without node_modules — the runtime then 500s on every SSR request with
+// ERR_MODULE_NOT_FOUND 'tslib'. Alias it to its actual entry file so it is
+// bundled like the rest of the libs.
+const tslibEntry = new URL("node_modules/tslib/tslib.es6.mjs", import.meta.url).pathname;
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
@@ -23,6 +30,7 @@ export default defineConfig({
       alias: [
         { find: /^punycode\/$/, replacement: punycodeEntry },
         { find: /^punycode$/, replacement: punycodeEntry },
+        { find: /^tslib$/, replacement: tslibEntry },
       ],
     },
   },
@@ -30,6 +38,7 @@ export default defineConfig({
     alias: {
       "punycode/": punycodeEntry,
       punycode: punycodeEntry,
+      tslib: tslibEntry,
     },
   },
 });

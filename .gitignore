@@ -41,3 +41,4 @@ instagram-kit/.venv/
 
 .vercel
 .env*
+.vercel/
