@@ -15,19 +15,36 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install deps
-        run: npm ci
+      # Vercel builds on its own servers using the saved project settings
+      # (framework preset: tanstack-start-lovable). The tslib workaround below
+      # runs AFTER checkout because the build command includes a prebuild step
+      # that materializes .vercel/output locally via `vercel build`.
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
 
-      - name: Build
-        run: npm run build
+      - name: Pull Vercel project settings
+        run: vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      - name: Patch missing tslib into prebuilt output
+      - name: Build (vercel build)
+        run: vercel build --prod --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # The prebuilt server bundle imports 'tslib' as a bare external, but the
+      # deployed lambda ships without node_modules — patch it in before upload.
+      - name: Patch tslib into prebuilt output
         run: |
           mkdir -p .vercel/output/functions/__server.func/node_modules/tslib
           cp -r node_modules/tslib/. .vercel/output/functions/__server.func/node_modules/tslib/
 
       - name: Deploy to Vercel
-        run: npx vercel deploy --prod --prebuilt --yes --token "$VERCEL_TOKEN"
+        run: vercel deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN"
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
