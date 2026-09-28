@@ -11,6 +11,7 @@ import {
   type GalleryComment,
   type GalleryPhoto,
 } from "@/lib/gallery";
+import { galleryUrl } from "@/lib/gallery-url";
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
@@ -163,7 +164,7 @@ function GalleryPage() {
                 onClick={() => setOpenPhoto(photo)}
               >
                 <img
-                  src={photo.url.replace("/upload/", "/upload/f_auto,q_auto,w_720/")}
+                  src={galleryUrl(photo.url, 720)}
                   alt={photo.title || photo.album}
                   loading="lazy"
                   className="w-full transition-transform duration-700 group-hover:scale-[1.03]"
@@ -260,7 +261,7 @@ function Lightbox({ photo, onClose }: { photo: GalleryPhoto; onClose: () => void
       <div className="flex max-h-full w-full max-w-5xl flex-col overflow-hidden border border-white/10 bg-surface-dark lg:flex-row">
         <div className="flex min-h-0 flex-1 items-center justify-center bg-black/40">
           <img
-            src={photo.url.replace("/upload/", "/upload/f_auto,q_auto,w_1400/")}
+            src={galleryUrl(photo.url, 1400)}
             alt={photo.album}
             className="max-h-[70vh] w-full object-contain"
           />

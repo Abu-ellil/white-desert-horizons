@@ -62,7 +62,7 @@ function parsePublicId(input: unknown): { publicId: string } {
   return { publicId };
 }
 
-/** Like counts for a batch of photos (photo_likes collection, keyed by public_id). */
+/** Like counts for a batch of keys (photo_likes collection, keyed by `photo`). */
 export const getGalleryLikes = createServerFn({ method: "GET" })
   .validator((input: unknown) => {
     const raw = (input as { publicIds?: unknown })?.publicIds;

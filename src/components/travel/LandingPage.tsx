@@ -461,6 +461,7 @@ function GalleryImage({
   height,
   caption,
   className = "",
+  initialCount,
 }: {
   photo: string;
   src: string;
@@ -469,9 +470,18 @@ function GalleryImage({
   height: number;
   caption: string;
   className?: string;
+  initialCount?: number | undefined;
 }) {
   const [liked, setLiked] = useState(false);
-  const [count, setCount] = useState<number | null>(null);
+  const [count, setCount] = useState<number | null>(initialCount ?? null);
+
+  // A late-arriving batch count wins only if the visitor hasn't already liked
+  // in this session (their +1 optimistic increment would otherwise be lost).
+  useEffect(() => {
+    if (initialCount !== undefined && !liked)
+      setCount((c) => (c === null ? initialCount : Math.max(c, initialCount)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCount]);
 
   async function like() {
     if (liked) return;
@@ -521,6 +531,15 @@ function GalleryImage({
 }
 
 function Gallery() {
+  // Hydrate real counts from photo_likes once on mount (decorative on failure).
+  const [likes, setLikes] = useState<Record<string, number>>({});
+  useEffect(() => {
+    import("@/lib/likes")
+      .then(({ getLandingLikes }) => getLandingLikes())
+      .then((counts) => setLikes(counts ?? {}))
+      .catch(() => {});
+  }, []);
+
   return (
     <section id="gallery" className="bg-surface-dark py-24 text-surface-dark-foreground sm:py-32">
       <div className="reveal mx-auto mb-12 flex max-w-[1440px] flex-col justify-between gap-7 px-5 sm:flex-row sm:items-end sm:px-8 lg:px-12">
@@ -541,6 +560,7 @@ function Gallery() {
           height={1200}
           caption="Dawn · White Desert"
           className="col-span-2 sm:row-span-2"
+          initialCount={likes["forms"]}
         />
         <GalleryImage
           photo="hero"
@@ -550,6 +570,7 @@ function Gallery() {
           height={1280}
           caption="Last light"
           className="sm:col-span-2"
+          initialCount={likes["hero"]}
         />
         <GalleryImage
           photo="camp"
@@ -558,6 +579,7 @@ function Gallery() {
           width={1440}
           height={1808}
           caption="Night camp"
+          initialCount={likes["camp"]}
         />
         <GalleryImage
           photo="contrast"
@@ -566,6 +588,7 @@ function Gallery() {
           width={1600}
           height={1200}
           caption="Black Desert edge"
+          initialCount={likes["contrast"]}
         />
       </div>
       <div className="mt-10 flex justify-center">
