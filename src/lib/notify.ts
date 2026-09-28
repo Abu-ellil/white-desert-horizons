@@ -26,12 +26,7 @@ function loadEnvFallback(): void {
 }
 loadEnvFallback();
 
-type EventKind =
-  | "visit"
-  | "testimonial"
-  | "booking_request"
-  | "booking"
-  | "like";
+type EventKind = "visit" | "testimonial" | "booking_request" | "booking" | "like" | "comment";
 
 const ICONS: Record<EventKind, string> = {
   visit: "👀",
@@ -39,6 +34,7 @@ const ICONS: Record<EventKind, string> = {
   booking_request: "📝",
   booking: "🧭",
   like: "❤️",
+  comment: "💬",
 };
 
 const LABELS: Record<EventKind, string> = {
@@ -47,6 +43,7 @@ const LABELS: Record<EventKind, string> = {
   booking_request: "طلب حجز/استفسار جديد",
   booking: "حجز جديد!",
   like: "إعجاب جديد بصورة",
+  comment: "تعليق جديد على صورة",
 };
 
 /** Fire-and-forget Telegram message. Safe to call without await. */
@@ -70,8 +67,7 @@ export function notify(event: EventKind, detail?: string): void {
       signal: AbortSignal.timeout(8000),
     })
       .then((r) => {
-        if (!r.ok)
-          console.warn(`[notify] telegram responded ${r.status} for ${event}`);
+        if (!r.ok) console.warn(`[notify] telegram responded ${r.status} for ${event}`);
       })
       .catch((e) =>
         console.warn(`[notify] failed (${event}):`, e instanceof Error ? e.message : e),

@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   ArrowDown,
   ArrowRight,
@@ -566,6 +567,14 @@ function Gallery() {
           height={1200}
           caption="Black Desert edge"
         />
+      </div>
+      <div className="mt-10 flex justify-center">
+        <Link
+          to="/gallery"
+          className="inline-flex items-center gap-2 border border-surface-dark-foreground/25 px-6 py-3 text-xs font-semibold uppercase tracking-[0.14em] transition-colors hover:border-primary hover:text-primary"
+        >
+          See more <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
     </section>
   );
