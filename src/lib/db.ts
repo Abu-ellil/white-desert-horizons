@@ -68,6 +68,8 @@ export async function getAnyCollection(name: string): Promise<Collection<any>> {
       await client.connect();
       // Indexes: created once per cold start, idempotent.
       await client.db().collection("testimonials").createIndex({ status: 1, createdAt: -1 });
+      await client.db().collection("visits").createIndex({ ts: -1 });
+      await client.db().collection("visits").createIndex({ sid: 1, ts: -1 });
     } catch (err) {
       // CRITICAL: never cache a failed client — a cached broken client makes every
       // later request throw "Topology is closed" until the lambda recycles.

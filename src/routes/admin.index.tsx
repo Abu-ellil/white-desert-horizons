@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Check,
+  Eye,
+  Globe,
   Image as ImageIcon,
   KeyRound,
   LayoutDashboard,
@@ -9,9 +11,12 @@ import {
   LogOut,
   MessageSquareQuote,
   ShieldCheck,
+  Smartphone,
 } from "lucide-react";
 
 import { adminLogin, adminLogout, changeAdminPassword, getAdminSession } from "@/lib/auth";
+import { getVisitStatsFn } from "@/lib/tracking";
+import type { VisitStats } from "@/lib/visits";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -164,6 +169,8 @@ function Panel({ onSignOut }: { onSignOut: () => void }) {
           />
         </div>
 
+        <Visitors />
+
         <section className="mt-10 border border-border bg-card p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -213,6 +220,206 @@ function AdminCard({
       <h3 className="mt-4 text-sm font-bold uppercase tracking-[0.12em]">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">{desc}</p>
     </Link>
+  );
+}
+
+/** Visitor stats — unique visitors, countries, cities, paths, recent hits. */
+function Visitors() {
+  const [stats, setStats] = useState<VisitStats | null>(null);
+  const [error, setError] = useState("");
+
+  const load = useCallback(() => {
+    setError("");
+    getVisitStatsFn()
+      .then((s) => setStats(s as unknown as VisitStats))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Could not load visitor stats."),
+      );
+  }, []);
+
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 60_000); // refresh every minute
+    return () => clearInterval(t);
+  }, [load]);
+
+  if (error)
+    return (
+      <section className="mt-10 border border-border bg-card p-6">
+        <h2 className="text-xs font-bold uppercase tracking-[0.16em]">Visitors</h2>
+        <p className="mt-2 text-sm text-red-600">{error}</p>
+      </section>
+    );
+
+  if (!stats)
+    return (
+      <section className="mt-10 border border-border bg-card p-6">
+        <h2 className="text-xs font-bold uppercase tracking-[0.16em]">Visitors</h2>
+        <Loader2 className="mt-3 h-4 w-4 animate-spin text-muted-foreground" />
+      </section>
+    );
+
+  const { totals, byCountry, byCity, byPath, recent } = stats;
+  const maxCountryVisitors = Math.max(1, ...byCountry.map((c) => c.visitors));
+
+  return (
+    <section className="mt-10 border border-border bg-card p-6">
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em]">
+          <Eye className="h-4 w-4 text-primary" /> Visitors
+        </h2>
+        <span className="text-[0.68rem] text-muted-foreground">auto-refreshes every minute</span>
+      </div>
+
+      {/* Totals */}
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <Stat label="Total views" value={totals.views} />
+        <Stat label="Unique visitors" value={totals.visitors} />
+        <Stat label="Countries" value={totals.countries} />
+        <Stat label="Views today" value={totals.today} />
+        <Stat label="7-day views" value={totals.weekViews} />
+        <Stat label="7-day visitors" value={totals.weekVisitors} />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        {/* Countries with bar widths, Blogger-style */}
+        <div>
+          <h3 className="inline-flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            <Globe className="h-3.5 w-3.5" /> Countries
+          </h3>
+          {byCountry.length === 0 ? (
+            <p className="mt-2 text-xs text-muted-foreground">No visits recorded yet.</p>
+          ) : (
+            <ul className="mt-2 space-y-1.5">
+              {byCountry.map((c) => (
+                <li key={`${c.code}-${c.name}`} className="text-xs">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="truncate font-semibold">
+                      {c.flag} {c.name}
+                    </span>
+                    <span className="shrink-0 tabular-nums text-muted-foreground">
+                      {c.visitors} visitor{c.visitors === 1 ? "" : "s"} · {c.views} view
+                      {c.views === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 h-1 bg-muted">
+                    <div
+                      className="h-full bg-primary"
+                      style={{ width: `${(c.visitors / maxCountryVisitors) * 100}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Cities + top pages */}
+        <div className="space-y-6">
+          <div>
+            <h3 className="inline-flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              <Globe className="h-3.5 w-3.5" /> Cities
+            </h3>
+            {byCity.length === 0 ? (
+              <p className="mt-2 text-xs text-muted-foreground">No city data yet.</p>
+            ) : (
+              <ul className="mt-2 space-y-1 text-xs">
+                {byCity.map((c) => (
+                  <li key={`${c.city}-${c.country}`} className="flex justify-between gap-2">
+                    <span className="truncate">
+                      {c.city}
+                      {c.country ? (
+                        <span className="text-muted-foreground"> · {c.country}</span>
+                      ) : null}
+                    </span>
+                    <span className="shrink-0 tabular-nums text-muted-foreground">
+                      {c.visitors}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div>
+            <h3 className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              Top pages
+            </h3>
+            <ul className="mt-2 space-y-1 text-xs">
+              {byPath.map((p) => (
+                <li key={p.path} className="flex justify-between gap-2">
+                  <span className="truncate font-mono">{p.path}</span>
+                  <span className="shrink-0 tabular-nums text-muted-foreground">{p.views}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent visits */}
+      <h3 className="mt-6 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+        Recent visits
+      </h3>
+      <div className="mt-2 overflow-x-auto">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr className="border-b border-border text-[0.62rem] uppercase tracking-[0.12em] text-muted-foreground">
+              <th className="py-1.5 pr-3 font-semibold">When</th>
+              <th className="py-1.5 pr-3 font-semibold">Path</th>
+              <th className="py-1.5 pr-3 font-semibold">Location</th>
+              <th className="py-1.5 pr-3 font-semibold">Device</th>
+              <th className="py-1.5 pr-3 font-semibold">From</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recent.map((v) => (
+              <tr key={v.id} className="border-b border-border/50">
+                <td className="py-1.5 pr-3 whitespace-nowrap tabular-nums text-muted-foreground">
+                  {new Date(v.ts).toLocaleString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </td>
+                <td className="py-1.5 pr-3 font-mono">{v.path}</td>
+                <td className="py-1.5 pr-3">
+                  {v.flag} {v.city ? `${v.city}, ` : ""}
+                  {v.countryName}
+                  <span className="ml-1 font-mono text-muted-foreground">{v.ip}</span>
+                </td>
+                <td className="py-1.5 pr-3">
+                  <span className="inline-flex items-center gap-1">
+                    <Smartphone className="h-3 w-3 text-muted-foreground" /> {v.device}
+                  </span>
+                </td>
+                <td className="py-1.5 pr-3 max-w-[180px] truncate text-muted-foreground">
+                  {v.ref || "direct"}
+                </td>
+              </tr>
+            ))}
+            {recent.length === 0 && (
+              <tr>
+                <td colSpan={5} className="py-3 text-muted-foreground">
+                  No visits recorded yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="border border-border bg-background p-3">
+      <p className="text-xl font-bold tabular-nums">{value.toLocaleString("en-US")}</p>
+      <p className="mt-0.5 text-[0.62rem] uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </p>
+    </div>
   );
 }
 
