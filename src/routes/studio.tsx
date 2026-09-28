@@ -23,6 +23,7 @@ import {
   toggleMediaFavorite,
   type MediaRow,
 } from "@/lib/studio";
+import { compressImage } from "@/lib/image-compress";
 
 export const Route = createFileRoute("/studio")({
   head: () => ({
@@ -66,6 +67,8 @@ type StagedItem = {
   previewUrl: string;
   title: string;
   description: string;
+  /** Set when client-side compression replaced the original file. */
+  originalSize?: number;
 };
 
 /** Inline title/description editor for one photo (studio-only). */
@@ -177,6 +180,14 @@ function StagingRow({
           <span className="shrink-0 text-[10px] text-muted-foreground">
             {formatBytes(item.file.size)}
           </span>
+          {item.originalSize !== undefined && item.originalSize > item.file.size && (
+            <span
+              className="shrink-0 text-[10px] font-semibold text-primary"
+              title={`Compressed from ${formatBytes(item.originalSize)}`}
+            >
+              −{Math.round((1 - item.file.size / item.originalSize) * 100)}%
+            </span>
+          )}
         </div>
         {open ? (
           <div className="mt-1.5 space-y-1.5">
@@ -272,6 +283,8 @@ function StudioPage() {
   const stageFiles = useCallback((files: File[]) => {
     const images = files.filter((f) => /^image\//.test(f.type));
     if (images.length === 0) return;
+    // Compress asynchronously — staged rows appear immediately with the
+    // original file, then quietly swap to the compressed one when ready.
     setStaged((prev) => [
       ...prev,
       ...images.map((file, i) => ({
@@ -282,6 +295,26 @@ function StudioPage() {
         description: "",
       })),
     ]);
+    for (const file of images) {
+      void compressImage(file).then((res) => {
+        if (res.skipped) return;
+        setStaged((prev) =>
+          prev.map((x) =>
+            x.file === file
+              ? {
+                  ...x,
+                  file: res.file,
+                  originalSize: res.originalBytes,
+                  previewUrl: (() => {
+                    URL.revokeObjectURL(x.previewUrl);
+                    return URL.createObjectURL(res.file);
+                  })(),
+                }
+              : x,
+          ),
+        );
+      });
+    }
   }, []);
 
   const removeStaged = useCallback((key: string) => {
