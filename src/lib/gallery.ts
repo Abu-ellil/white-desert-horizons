@@ -21,6 +21,8 @@ export type GalleryPhoto = {
   width: number;
   height: number;
   album: string;
+  title: string;
+  description: string;
   created_at: string;
 };
 
@@ -48,6 +50,8 @@ export const getPublicGallery = createServerFn({ method: "GET" })
       width: r.width,
       height: r.height,
       album: r.album,
+      title: r.title,
+      description: r.description,
       created_at: r.created_at,
     }));
   });

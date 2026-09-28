@@ -164,12 +164,12 @@ function GalleryPage() {
               >
                 <img
                   src={photo.url.replace("/upload/", "/upload/f_auto,q_auto,w_720/")}
-                  alt={photo.album}
+                  alt={photo.title || photo.album}
                   loading="lazy"
                   className="w-full transition-transform duration-700 group-hover:scale-[1.03]"
                 />
                 <figcaption className="absolute bottom-5 left-5 text-[0.62rem] uppercase tracking-[0.18em] text-white/90">
-                  {photo.album}
+                  {photo.title || photo.album}
                 </figcaption>
                 <button
                   type="button"
@@ -268,6 +268,16 @@ function Lightbox({ photo, onClose }: { photo: GalleryPhoto; onClose: () => void
         <aside className="flex w-full flex-col border-t border-white/10 lg:w-80 lg:border-l lg:border-t-0">
           <div className="border-b border-white/10 p-5">
             <p className="section-kicker">{photo.album}</p>
+            {photo.title && (
+              <h2 className="mt-2 text-sm font-bold text-surface-dark-foreground/95">
+                {photo.title}
+              </h2>
+            )}
+            {photo.description && (
+              <p className="mt-1 text-xs leading-6 text-surface-dark-foreground/65">
+                {photo.description}
+              </p>
+            )}
             <p className="mt-2 text-xs text-surface-dark-foreground/50">
               {new Date(photo.created_at).toLocaleDateString("en-GB", {
                 day: "2-digit",

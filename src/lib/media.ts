@@ -21,6 +21,8 @@ export type MediaRow = {
   format: string;
   bytes: number;
   album: string;
+  title: string;
+  description: string;
   tags: string[];
   favorite: boolean;
   created_at: string;
@@ -43,6 +45,8 @@ export function toMediaRow(doc: MediaDoc): MediaRow {
     format: String(doc.format ?? "jpg"),
     bytes: Number(doc.bytes ?? 0),
     album: String(doc.album ?? "Unsorted"),
+    title: String(doc.title ?? ""),
+    description: String(doc.description ?? ""),
     tags: Array.isArray(doc.tags) ? doc.tags.map(String).slice(0, 12) : [],
     favorite: Boolean(doc.favorite),
     created_at:
@@ -101,6 +105,17 @@ export async function setMediaFavorite(id: string, favorite: boolean): Promise<v
   const col = await getCollection();
   const { ObjectId } = await import("mongodb");
   await col.updateOne({ _id: new ObjectId(id) }, { $set: { favorite } });
+}
+
+/** Set a human caption/metadata for a photo (shown in the studio and public gallery). */
+export async function setMediaCaption(
+  id: string,
+  title: string,
+  description: string,
+): Promise<void> {
+  const col = await getCollection();
+  const { ObjectId } = await import("mongodb");
+  await col.updateOne({ _id: new ObjectId(id) }, { $set: { title, description } });
 }
 
 export async function getMedia(id: string): Promise<MediaRow | null> {

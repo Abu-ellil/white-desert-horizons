@@ -110,6 +110,24 @@ export const toggleMediaFavorite = createServerFn({ method: "POST" })
     await setMediaFavorite(data.id, data.favorite);
   });
 
+export const setMediaCaptionFn = createServerFn({ method: "POST" })
+  .validator((input: unknown) => {
+    const { id } = parseId(input);
+    const title = String((input as { title?: unknown })?.title ?? "")
+      .trim()
+      .slice(0, 80);
+    const description = String((input as { description?: unknown })?.description ?? "")
+      .trim()
+      .slice(0, 500);
+    return { id, title, description };
+  })
+  .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/auth");
+    await requireAdmin();
+    const { setMediaCaption } = await import("@/lib/media");
+    await setMediaCaption(data.id, data.title, data.description);
+  });
+
 export const removeMedia = createServerFn({ method: "POST" })
   .validator(parseId)
   .handler(async ({ data }) => {

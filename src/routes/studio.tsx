@@ -5,6 +5,7 @@ import {
   Copy,
   FolderInput,
   Loader2,
+  Pencil,
   RefreshCw,
   Star,
   Trash2,
@@ -18,6 +19,7 @@ import {
   moveMediaToAlbum,
   registerUploadedMedia,
   removeMedia,
+  setMediaCaptionFn,
   toggleMediaFavorite,
   type MediaRow,
 } from "@/lib/studio";
@@ -45,6 +47,89 @@ type QueueItem = {
   progress: number;
   error?: string;
 };
+
+/** Inline title/description editor for one photo (studio-only). */
+function CaptionEditor({
+  row,
+  busy,
+  onSave,
+}: {
+  row: MediaRow;
+  busy: boolean;
+  onSave: (title: string, description: string) => Promise<boolean>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState(row.title);
+  const [description, setDescription] = useState(row.description);
+  const [saving, setSaving] = useState(false);
+
+  // Re-sync local draft state when a different photo renders into this slot.
+  useEffect(() => {
+    setTitle(row.title);
+    setDescription(row.description);
+    setOpen(false);
+  }, [row.id, row.title, row.description]);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-primary"
+      >
+        <Pencil className="h-3 w-3" />
+        {row.title ? "Edit caption" : "Add caption"}
+      </button>
+    );
+  }
+
+  return (
+    <form
+      className="mt-2 space-y-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setSaving(true);
+        void onSave(title, description).then((ok) => {
+          setSaving(false);
+          if (ok) setOpen(false);
+        });
+      }}
+    >
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Title (optional)"
+        maxLength={80}
+        className="w-full border border-input bg-background px-2 py-1.5 text-xs font-semibold text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
+      />
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="Description (optional)"
+        maxLength={500}
+        rows={2}
+        className="w-full resize-none border border-input bg-background px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
+      />
+      <div className="flex items-center gap-2">
+        <button
+          type="submit"
+          disabled={saving || busy}
+          className="inline-flex items-center gap-1 bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+          Save
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
 
 /** Shared "you shall not pass" screen — links to the login at /admin. */
 function AccessDenied() {
@@ -156,6 +241,30 @@ function StudioPage() {
       await refresh();
     } catch {
       setError("Could not move the photo — try again.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function saveCaption(row: MediaRow, title: string, description: string): Promise<boolean> {
+    setBusyId(row.id);
+    try {
+      await setMediaCaptionFn({ data: { id: row.id, title, description } });
+      setRows((prev) =>
+        (prev ?? []).map((r) =>
+          r.id === row.id
+            ? {
+                ...r,
+                title: title.trim().slice(0, 80),
+                description: description.trim().slice(0, 500),
+              }
+            : r,
+        ),
+      );
+      return true;
+    } catch {
+      setError("Could not save the caption — try again.");
+      return false;
     } finally {
       setBusyId(null);
     }
@@ -450,8 +559,13 @@ function StudioPage() {
               </div>
               <figcaption className="border-t border-border px-3 py-2">
                 <span className="block truncate text-xs font-semibold">
-                  {row.publicId.split("/").pop()}
+                  {row.title || row.publicId.split("/").pop()}
                 </span>
+                {row.description && (
+                  <span className="mt-0.5 block text-[11px] leading-4 text-muted-foreground">
+                    {row.description}
+                  </span>
+                )}
                 <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                   {new Date(row.created_at).toLocaleDateString("en-GB", {
                     day: "2-digit",
@@ -459,6 +573,11 @@ function StudioPage() {
                   })}{" "}
                   · {row.width}×{row.height} · {formatBytes(row.bytes)}
                 </span>
+                <CaptionEditor
+                  row={row}
+                  busy={busyId === row.id}
+                  onSave={(t, d) => saveCaption(row, t, d)}
+                />
               </figcaption>
 
               {/* Hover actions */}

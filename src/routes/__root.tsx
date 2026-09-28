@@ -10,7 +10,6 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { trackVisit } from "@/lib/tracking";
 
 function NotFoundComponent() {
@@ -39,7 +38,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    console.error(error);
   }, [error]);
 
   return (
@@ -138,9 +137,9 @@ function useVisitTracking() {
     const notifyVisit = (path: string) => {
       // Skip admin pages — don't notify on my own visits.
       if (path.startsWith("/admin")) return;
-      trackVisit({ data: { path, ref: typeof document !== "undefined" ? document.referrer : "" } }).catch(
-        () => {},
-      );
+      trackVisit({
+        data: { path, ref: typeof document !== "undefined" ? document.referrer : "" },
+      }).catch(() => {});
     };
     notifyVisit(routerState.state.location.pathname);
     const unsub = routerState.subscribe("onResolved", (evt) => {
