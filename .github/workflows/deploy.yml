@@ -15,22 +15,14 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install Vercel CLI (pinned)
-        run: npm i -g vercel@60.1.3
+      - name: Install deps
+        run: npm ci
 
-      - name: Pull Vercel project settings
-        run: vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Build (vercel build)
-        run: vercel build --prod --token "$VERCEL_TOKEN"
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # The Lovable vite plugin builds the app AND emits the Vercel Build
+      # Output API into .vercel/output as part of `vite build` — no
+      # `vercel build` needed (it would mis-detect the framework on CI).
+      - name: Build
+        run: npm run build
 
       # The prebuilt server bundle imports 'tslib' as a bare external, but the
       # deployed lambda ships without node_modules — patch it in before upload.
@@ -38,11 +30,10 @@ jobs:
         run: |
           mkdir -p .vercel/output/functions/__server.func/node_modules/tslib
           cp -r node_modules/tslib/. .vercel/output/functions/__server.func/node_modules/tslib/
-          ls -la .vercel/output/functions/
-          find .vercel/output/functions -name ".vc-config.json" | head -5
+          find .vercel/output/functions -name ".vc-config.json"
 
       - name: Deploy to Vercel
-        run: vercel deploy --prebuilt --archive=tgz --prod --yes --token "$VERCEL_TOKEN"
+        run: npx vercel deploy --prebuilt --archive=tgz --prod --yes --token "$VERCEL_TOKEN"
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
