@@ -24,6 +24,8 @@ export const getMediaLibrary = createServerFn({ method: "GET" })
     return { album };
   })
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/auth");
+    await requireAdmin();
     const { listMedia } = await import("@/lib/media");
     return listMedia(data.album);
   });
@@ -36,6 +38,8 @@ export const getUploadSignature = createServerFn({ method: "POST" })
     return { folder: `white-desert/${raw}` };
   })
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/auth");
+    await requireAdmin();
     const { signUploadParams } = await import("@/lib/cloudinary");
     return signUploadParams(data.folder);
   });
@@ -67,6 +71,8 @@ export const registerUploadedMedia = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/auth");
+    await requireAdmin();
     const { createMedia } = await import("@/lib/media");
     return createMedia(data);
   });
@@ -85,6 +91,8 @@ export const moveMediaToAlbum = createServerFn({ method: "POST" })
     return { id, album };
   })
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/auth");
+    await requireAdmin();
     const { setMediaAlbum } = await import("@/lib/media");
     await setMediaAlbum(data.id, data.album);
   });
@@ -96,6 +104,8 @@ export const toggleMediaFavorite = createServerFn({ method: "POST" })
     return { id, favorite };
   })
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/auth");
+    await requireAdmin();
     const { setMediaFavorite } = await import("@/lib/media");
     await setMediaFavorite(data.id, data.favorite);
   });
@@ -103,6 +113,8 @@ export const toggleMediaFavorite = createServerFn({ method: "POST" })
 export const removeMedia = createServerFn({ method: "POST" })
   .validator(parseId)
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/auth");
+    await requireAdmin();
     const { getMedia, deleteMediaRow } = await import("@/lib/media");
     const { destroyCloudinaryAsset } = await import("@/lib/cloudinary");
     const row = await getMedia(data.id);

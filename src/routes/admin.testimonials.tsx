@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, RefreshCw, RotateCcw, Trash2, X } from "lucide-react";
 
 import { getAllTestimonials, setTestimonialReview, removeTestimonial } from "@/lib/testimonials";
@@ -25,7 +25,31 @@ export const Route = createFileRoute("/admin/testimonials")({
   component: AdminTestimonials,
 });
 
+/** Shared "you shall not pass" screen — links to the login at /admin. */
+function AccessDenied() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-background px-5">
+      <div className="w-full max-w-sm border border-border bg-card p-8 text-center">
+        <p className="section-kicker">Admin only</p>
+        <h1 className="editorial-title mt-3 text-3xl">
+          Sign in <em>required.</em>
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          Reviews moderation is protected. Sign in with the admin password to continue.
+        </p>
+        <Link
+          to="/admin"
+          className="mt-6 inline-flex items-center justify-center bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          Go to sign in
+        </Link>
+      </div>
+    </main>
+  );
+}
+
 function AdminTestimonials() {
+  const [authError, setAuthError] = useState(false);
   const [rows, setRows] = useState<Row[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -35,7 +59,11 @@ function AdminTestimonials() {
     try {
       const data = await getAllTestimonials();
       setRows(data as unknown as Row[]);
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && /Not authorized/.test(err.message)) {
+        setAuthError(true);
+        return;
+      }
       setError("Could not load reviews. Check MONGODB_URI and the connection.");
     }
   }, []);
@@ -64,6 +92,8 @@ function AdminTestimonials() {
   const pending = rows?.filter((r) => r.status === "pending") ?? [];
   const published = rows?.filter((r) => r.status === "approved") ?? [];
   const rejected = rows?.filter((r) => r.status === "rejected") ?? [];
+
+  if (authError) return <AccessDenied />;
 
   return (
     <main className="min-h-screen bg-background px-5 py-12 sm:px-8 lg:px-12">

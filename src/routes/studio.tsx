@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Check,
   Copy,
@@ -46,7 +46,31 @@ type QueueItem = {
   error?: string;
 };
 
+/** Shared "you shall not pass" screen — links to the login at /admin. */
+function AccessDenied() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-background px-5">
+      <div className="w-full max-w-sm border border-border bg-card p-8 text-center">
+        <p className="section-kicker">Admin only</p>
+        <h1 className="editorial-title mt-3 text-3xl">
+          Sign in <em>required.</em>
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          The studio is protected. Sign in with the admin password to continue.
+        </p>
+        <Link
+          to="/admin"
+          className="mt-6 inline-flex items-center justify-center bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          Go to sign in
+        </Link>
+      </div>
+    </main>
+  );
+}
+
 function StudioPage() {
+  const [authError, setAuthError] = useState(false);
   const [rows, setRows] = useState<MediaRow[] | null>(null);
   const [album, setAlbum] = useState("All");
   const [error, setError] = useState("");
@@ -64,6 +88,10 @@ function StudioPage() {
       const data = await getMediaLibrary({ data: { album } });
       setRows(data as unknown as MediaRow[]);
     } catch (err) {
+      if (err instanceof Error && /Not authorized/.test(err.message)) {
+        setAuthError(true);
+        return;
+      }
       setError(
         err instanceof Error && /not configured|MONGODB/.test(err.message)
           ? err.message
@@ -239,6 +267,8 @@ function StudioPage() {
       setUploading(false);
     }
   }
+
+  if (authError) return <AccessDenied />;
 
   return (
     <main

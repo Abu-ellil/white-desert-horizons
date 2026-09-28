@@ -21,6 +21,8 @@ export const getApprovedTestimonials = createServerFn({ method: "GET" }).handler
 });
 
 export const getAllTestimonials = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireAdmin } = await import("@/lib/auth");
+  await requireAdmin();
   const { listTestimonials } = await import("@/lib/db");
   return listTestimonials(false);
 });
@@ -52,6 +54,7 @@ export const submitTestimonial = createServerFn({ method: "POST" })
     },
   )
   .handler(async ({ data }) => {
+    // PUBLIC: visitors submit reviews from the landing page — do not gate this one.
     const { createTestimonial } = await import("@/lib/db");
     const row = await createTestimonial(data);
     const { notify } = await import("@/lib/notify");
@@ -79,6 +82,8 @@ export const setTestimonialReview = createServerFn({ method: "POST" })
     return { id, status: status as "approved" | "rejected" | "pending" };
   })
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/auth");
+    await requireAdmin();
     const { setTestimonialStatus } = await import("@/lib/db");
     await setTestimonialStatus(data.id, data.status);
   });
@@ -86,6 +91,8 @@ export const setTestimonialReview = createServerFn({ method: "POST" })
 export const removeTestimonial = createServerFn({ method: "POST" })
   .validator(parseId)
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/auth");
+    await requireAdmin();
     const { deleteTestimonial } = await import("@/lib/db");
     await deleteTestimonial(data.id);
   });
