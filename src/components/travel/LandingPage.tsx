@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 
 import { trackEvent } from "@/lib/events";
 import { faqs } from "@/components/travel/faq-content";
+import { TrustStrip } from "@/components/travel/TrustStrip";
 import {
   ArrowDown,
   ArrowRight,
@@ -1238,6 +1239,7 @@ export function LandingPage() {
       <main>
         <Hero />
         <Introduction />
+        <TrustStrip />
         <Experiences />
         <AfterSunset />
         <WhyUs />
