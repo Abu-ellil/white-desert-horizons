@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -235,6 +235,22 @@ function Lightbox({
   const hasPrev = index > 0;
   const hasNext = index < photos.length - 1;
 
+  // Touch swipe (mobile): track a horizontal drag and flip photos on release.
+  const touchStartX = useRef<number | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0]?.clientX ?? null;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStartX.current;
+    touchStartX.current = null;
+    if (start === null) return;
+    const dx = e.changedTouches[0]?.clientX - start;
+    if (dx === undefined || Math.abs(dx) < 50) return; // ignore tiny drags
+    if (dx < 0)
+      goNext(); // swipe left → next
+    else goPrev(); // swipe right → previous
+  };
+
   const goPrev = useCallback(() => {
     if (hasPrev) onNavigate(index - 1);
   }, [hasPrev, index, onNavigate]);
@@ -244,9 +260,8 @@ function Lightbox({
   }, [hasNext, index, onNavigate]);
 
   useEffect(() => {
-    const publicId = photo?.publicId;
-    if (!publicId) return;
-    listGalleryComments({ data: { publicId } })
+    if (!photo) return;
+    listGalleryComments({ data: { publicId: photo.publicId } })
       .then((rows) => setComments(rows as unknown as GalleryComment[]))
       .catch(() => setComments([]));
   }, [photo?.publicId]);
@@ -263,15 +278,13 @@ function Lightbox({
 
   if (!photo) return null;
 
-  const publicId = photo.publicId;
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setSending(true);
     setCommentError("");
     try {
       const row = (await addGalleryComment({
-        data: { publicId, name, text },
+        data: { publicId: photo.publicId, name, text },
       })) as unknown as GalleryComment;
       setComments((prev) => [row, ...(prev ?? [])]);
       setText("");
@@ -294,6 +307,8 @@ function Lightbox({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
       role="dialog"
       aria-modal="true"
     >
