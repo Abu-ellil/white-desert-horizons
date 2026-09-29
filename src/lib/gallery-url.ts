@@ -26,8 +26,5 @@ export function galleryUrl(cloudinaryUrl: string, width: number): string {
     "x_20",
     "y_20",
   ].join(",");
-  return cloudinaryUrl.replace(
-    "/upload/",
-    `/upload/f_auto,q_auto,w_${width}/${wm}/`,
-  );
+  return cloudinaryUrl.replace("/upload/", `/upload/f_auto,q_auto,w_${width}/${wm}/`);
 }
