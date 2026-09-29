@@ -244,8 +244,9 @@ function Lightbox({
   }, [hasNext, index, onNavigate]);
 
   useEffect(() => {
-    if (!photo) return;
-    listGalleryComments({ data: { publicId: photo.publicId } })
+    const publicId = photo?.publicId;
+    if (!publicId) return;
+    listGalleryComments({ data: { publicId } })
       .then((rows) => setComments(rows as unknown as GalleryComment[]))
       .catch(() => setComments([]));
   }, [photo?.publicId]);
@@ -262,13 +263,15 @@ function Lightbox({
 
   if (!photo) return null;
 
+  const publicId = photo.publicId;
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setSending(true);
     setCommentError("");
     try {
       const row = (await addGalleryComment({
-        data: { publicId: photo.publicId, name, text },
+        data: { publicId, name, text },
       })) as unknown as GalleryComment;
       setComments((prev) => [row, ...(prev ?? [])]);
       setText("");
