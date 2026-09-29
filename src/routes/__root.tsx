@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { analyticsAllowed } from "@/lib/consent";
 import { trackVisit } from "@/lib/tracking";
 
 function NotFoundComponent() {
@@ -151,6 +152,8 @@ function useVisitTracking() {
     const notifyVisit = (path: string) => {
       // Skip admin pages — don't notify on my own visits.
       if (path.startsWith("/admin")) return;
+      // Consent gate: no analytics ping until the visitor accepts cookies.
+      if (!analyticsAllowed()) return;
       trackVisit({
         data: { path, ref: typeof document !== "undefined" ? document.referrer : "" },
       }).catch(() => {});

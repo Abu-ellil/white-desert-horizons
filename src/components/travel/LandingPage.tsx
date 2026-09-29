@@ -2,8 +2,10 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 
 import { trackEvent } from "@/lib/events";
+import { analyticsAllowed } from "@/lib/consent";
 import { faqs } from "@/components/travel/faq-content";
 import { TrustStrip } from "@/components/travel/TrustStrip";
+import { CookieConsent } from "@/components/travel/CookieConsent";
 import {
   ArrowDown,
   ArrowRight,
@@ -932,7 +934,8 @@ function PlanningForm() {
     const travelers = String(form.get("travelers") ?? "");
     const message = String(form.get("message") ?? "");
     // Notify + persist booking request (fire-and-forget), then open WhatsApp.
-    trackEvent({ data: { kind: "form_submit", label: experience || "plan" } }).catch(() => {});
+    if (analyticsAllowed())
+      trackEvent({ data: { kind: "form_submit", label: experience || "plan" } }).catch(() => {});
     try {
       const { recordBooking } = await import("@/lib/bookings");
       recordBooking({
@@ -989,11 +992,12 @@ function PlanningForm() {
                 href={`https://wa.me/${siteConfig.whatsappNumber}`}
                 target="_blank"
                 rel="noreferrer"
-                onClick={() =>
-                  trackEvent({ data: { kind: "whatsapp_click", label: "plan-direct" } }).catch(
-                    () => {},
-                  )
-                }
+                onClick={() => {
+                  if (analyticsAllowed())
+                    trackEvent({
+                      data: { kind: "whatsapp_click", label: "plan-direct" },
+                    }).catch(() => {});
+                }}
               >
                 <MessageCircle /> {siteConfig.whatsappDisplay}
               </a>
@@ -1258,6 +1262,7 @@ export function LandingPage() {
       </main>
       <InstagramStrip />
       <Footer />
+      <CookieConsent />
       <Button
         asChild
         variant="gold"
@@ -1266,9 +1271,10 @@ export function LandingPage() {
       >
         <a
           href="#plan"
-          onClick={() =>
-            trackEvent({ data: { kind: "whatsapp_click", label: "mobile-bar" } }).catch(() => {})
-          }
+          onClick={() => {
+            if (analyticsAllowed())
+              trackEvent({ data: { kind: "whatsapp_click", label: "mobile-bar" } }).catch(() => {});
+          }}
         >
           <MessageCircle /> Plan your journey
         </a>
