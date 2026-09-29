@@ -32,7 +32,18 @@ export type TourProgram = {
   excludes?: { ar: string; en: string }[];
   variants?: { id: string; labelAr: string; labelEn: string; days: ItineraryDay[] }[];
   note?: { titleAr: string; titleEn: string; bodyAr: string; bodyEn: string };
+  /**
+   * Indicative per-person USD ranges by group size — a booking aid, not a
+   * quote. Final pricing is always confirmed on WhatsApp (note text says so).
+   */
+  priceTiers?: { groupEn: string; groupAr: string; rangeEn: string; rangeAr: string }[];
 };
+
+/** Shared intro line for the pricing table (bilingual). */
+export const pricingIntro = {
+  en: "Indicative per-person ranges (USD) — every journey is private; the final quote is confirmed on WhatsApp.",
+  ar: "نطاقات استرشادية للشخص بالدولار — كل الرحلات خاصة، والسعر النهائي بيتأكد على واتساب.",
+} as const;
 
 export const programs: TourProgram[] = [
   {
@@ -111,6 +122,17 @@ export const programs: TourProgram[] = [
       bodyAr: "السعر دايماً حسب عدد الأفراد · كل الرحلات خاصة",
       bodyEn: "Price always depends on the number of people · All tours are private",
     },
+    priceTiers: [
+      { groupEn: "2 travelers", groupAr: "شخصين", rangeEn: "$230–280", rangeAr: "٢٣٠–٢٨٠$" },
+      { groupEn: "3–4 travelers", groupAr: "٣–٤ أفراد", rangeEn: "$190–230", rangeAr: "١٩٠–٢٣٠$" },
+      { groupEn: "5–6 travelers", groupAr: "٥–٦ أفراد", rangeEn: "$160–200", rangeAr: "١٦٠–٢٠٠$" },
+      {
+        groupEn: "7+ travelers",
+        groupAr: "٧ أفراد أو أكثر",
+        rangeEn: "$140–180",
+        rangeAr: "١٤٠–١٨٠$",
+      },
+    ],
   },
   {
     slug: "bahariya-expedition",
@@ -253,6 +275,17 @@ export const programs: TourProgram[] = [
       bodyEn:
         "Price depends on group size · All tours are private · Both versions available — choose one when booking",
     },
+    priceTiers: [
+      { groupEn: "2 travelers", groupAr: "شخصين", rangeEn: "$320–390", rangeAr: "٣٢٠–٣٩٠$" },
+      { groupEn: "3–4 travelers", groupAr: "٣–٤ أفراد", rangeEn: "$270–330", rangeAr: "٢٧٠–٣٣٠$" },
+      { groupEn: "5–6 travelers", groupAr: "٥–٦ أفراد", rangeEn: "$230–290", rangeAr: "٢٣٠–٢٩٠$" },
+      {
+        groupEn: "7+ travelers",
+        groupAr: "٧ أفراد أو أكثر",
+        rangeEn: "$200–260",
+        rangeAr: "٢٠٠–٢٦٠$",
+      },
+    ],
   },
   {
     slug: "siwa-oasis",
@@ -338,6 +371,11 @@ export const programs: TourProgram[] = [
       bodyEn:
         "The detailed itinerary runs three days and can be shortened to two. Return by air or road is confirmed during planning.",
     },
+    priceTiers: [
+      { groupEn: "2 travelers", groupAr: "شخصين", rangeEn: "$350–420", rangeAr: "٣٥٠–٤٢٠$" },
+      { groupEn: "3–4 travelers", groupAr: "٣–٤ أفراد", rangeEn: "$300–360", rangeAr: "٣٠٠–٣٦٠$" },
+      { groupEn: "5–6 travelers", groupAr: "٥–٦ أفراد", rangeEn: "$260–320", rangeAr: "٢٦٠–٣٢٠$" },
+    ],
   },
   {
     slug: "fayoum-safari",
@@ -394,6 +432,11 @@ export const programs: TourProgram[] = [
       bodyAr: "السعر حسب عدد الأفراد · الرحلة خاصة · الوجبات تُرتب عند التخطيط",
       bodyEn: "Price depends on group size · Private tour · Meals arranged during planning",
     },
+    priceTiers: [
+      { groupEn: "2 travelers", groupAr: "شخصين", rangeEn: "$120–150", rangeAr: "١٢٠–١٥٠$" },
+      { groupEn: "3–4 travelers", groupAr: "٣–٤ أفراد", rangeEn: "$100–130", rangeAr: "١٠٠–١٣٠$" },
+      { groupEn: "5–6 travelers", groupAr: "٥–٦ أفراد", rangeEn: "$85–115", rangeAr: "٨٥–١١٥$" },
+    ],
   },
 ];
 
@@ -624,22 +667,54 @@ export function ProgramPage({ program }: { program: TourProgram }) {
               </div>
             )}
             {program.note && (
-              <div
-                className="reveal self-start rounded-sm border border-primary/40 bg-primary/5 p-8"
-                dir={rtl ? "rtl" : "ltr"}
-              >
-                <p className="section-kicker">
-                  {rtl ? program.note.titleAr : program.note.titleEn}
-                </p>
-                <p className="mt-4 text-base leading-8">
-                  {rtl ? program.note.bodyAr : program.note.bodyEn}
-                </p>
-                {!rtl && program.note.bodyAr && null}
-                <Button asChild variant="goldOutline" size="journey" className="mt-7">
-                  <a href={`/?program=${program.slug}#plan`}>
-                    {rtl ? "اسأل عن البرنامج ده" : "Ask about this program"} <ArrowRight />
-                  </a>
-                </Button>
+              <div className="reveal flex flex-col gap-6 self-start">
+                {program.priceTiers && (
+                  <div
+                    className="rounded-sm border border-border bg-card p-8"
+                    dir={rtl ? "rtl" : "ltr"}
+                  >
+                    <p className="section-kicker">
+                      {rtl ? "الأسعار الاسترشادية" : "Indicative pricing"}
+                    </p>
+                    <p className="mt-3 text-xs leading-6 text-muted-foreground">
+                      {rtl ? pricingIntro.ar : pricingIntro.en}
+                    </p>
+                    <table className="mt-5 w-full border-t border-border text-sm">
+                      <tbody>
+                        {program.priceTiers.map((tier) => (
+                          <tr key={tier.groupEn} className="border-b border-border">
+                            <td className="py-3 pr-2 text-muted-foreground">
+                              {rtl ? tier.groupAr : tier.groupEn}
+                            </td>
+                            <td className="py-3 text-right font-serif text-lg">
+                              {rtl ? tier.rangeAr : tier.rangeEn}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <p className="mt-4 text-xs text-muted-foreground">
+                      {rtl ? "لكل الشخص · بالدولار الأمريكي" : "Per person · USD"}
+                    </p>
+                  </div>
+                )}
+                <div
+                  className="reveal rounded-sm border border-primary/40 bg-primary/5 p-8"
+                  dir={rtl ? "rtl" : "ltr"}
+                >
+                  <p className="section-kicker">
+                    {rtl ? program.note.titleAr : program.note.titleEn}
+                  </p>
+                  <p className="mt-4 text-base leading-8">
+                    {rtl ? program.note.bodyAr : program.note.bodyEn}
+                  </p>
+                  {!rtl && program.note.bodyAr && null}
+                  <Button asChild variant="goldOutline" size="journey" className="mt-7">
+                    <a href={`/?program=${program.slug}#plan`}>
+                      {rtl ? "اسأل عن البرنامج ده" : "Ask about this program"} <ArrowRight />
+                    </a>
+                  </Button>
+                </div>
               </div>
             )}
           </div>
