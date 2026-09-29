@@ -442,7 +442,8 @@ function GalleryImage({
   className = "",
   initialCount,
 }: {
-  photo: string;
+  /** Cloudinary public_id — the ONLY likeable key. Null = fallback tile, no heart. */
+  photo: string | null;
   src: string;
   alt: string;
   width: number;
@@ -453,6 +454,7 @@ function GalleryImage({
 }) {
   const [liked, setLiked] = useState(false);
   const [count, setCount] = useState<number | null>(initialCount ?? null);
+  const likeable = photo !== null;
 
   // A late-arriving batch count wins only if the visitor hasn't already liked
   // in this session (their +1 optimistic increment would otherwise be lost).
@@ -463,7 +465,7 @@ function GalleryImage({
   }, [initialCount]);
 
   async function like() {
-    if (liked) return;
+    if (!likeable || liked) return;
     const key = `wdh-liked-${photo}`;
     if (typeof localStorage !== "undefined" && localStorage.getItem(key)) return;
     setLiked(true);
@@ -492,19 +494,21 @@ function GalleryImage({
       <figcaption className="absolute bottom-5 left-5 text-[0.62rem] uppercase tracking-[0.18em] text-hero-foreground">
         {caption}
       </figcaption>
-      <button
-        type="button"
-        onClick={like}
-        aria-label={liked ? "Liked" : "Like this photo"}
-        className={`absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.68rem] backdrop-blur-sm transition-all ${
-          liked
-            ? "border-red-400/60 bg-red-500/25 text-red-200"
-            : "border-white/30 bg-black/30 text-white/90 hover:border-red-300/60 hover:text-red-200"
-        }`}
-      >
-        <Heart className={`h-3.5 w-3.5 ${liked ? "fill-current" : ""}`} />
-        {count !== null && count > 0 ? count : ""}
-      </button>
+      {likeable && (
+        <button
+          type="button"
+          onClick={like}
+          aria-label={liked ? "Liked" : "Like this photo"}
+          className={`absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.68rem] backdrop-blur-sm transition-all ${
+            liked
+              ? "border-red-400/60 bg-red-500/25 text-red-200"
+              : "border-white/30 bg-black/30 text-white/90 hover:border-red-300/60 hover:text-red-200"
+          }`}
+        >
+          <Heart className={`h-3.5 w-3.5 ${liked ? "fill-current" : ""}`} />
+          {count !== null && count > 0 ? count : ""}
+        </button>
+      )}
     </figure>
   );
 }
@@ -616,7 +620,7 @@ function Gallery() {
             height={slot.height}
             caption={slot.caption}
             className={slot.className}
-            initialCount={likes[slot.photo]}
+            initialCount={slot.photo === null ? undefined : likes[slot.photo]}
           />
         ))}
       </div>
