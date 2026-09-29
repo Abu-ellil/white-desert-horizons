@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { siteConfig } from "@/config/site";
 import { notify } from "@/lib/notify";
 
 /**
@@ -97,10 +98,12 @@ export const recordBooking = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data }) => {
     // 1. Instant notification (most important — user sees it even if DB fails)
-    notify(
-      "booking_request",
-      `👤 ${data.name || "بدون اسم"}\n📧 ${data.email || "—"}${data.whatsapp ? `\n📱 ${data.whatsapp}` : ""}\n🧭 ${data.experience || "غير محددة"}\n📅 ${data.date || "مرن"} · 👥 ${data.travelers || "?"}${data.message ? `\n💬 ${data.message.slice(0, 150)}` : ""}`,
-    );
+    const bookingText = `👤 ${data.name || "بدون اسم"}\n📧 ${data.email || "—"}${data.whatsapp ? `\n📱 ${data.whatsapp}` : ""}\n🧭 ${data.experience || "غير محددة"}\n📅 ${data.date || "مرن"} · 👥 ${data.travelers || "?"}${data.message ? `\n💬 ${data.message.slice(0, 150)}` : ""}`;
+    notify("booking_request", bookingText);
+
+    // 1b. WhatsApp group copy (Green-API) — silent no-op until configured.
+    const { notifyWhatsAppGroup } = await import("@/lib/whats-notify");
+    notifyWhatsAppGroup(`📝 طلب حجز جديد — ${siteConfig.name}\n\n${bookingText}`);
 
     // 2. Durable record — best-effort
     try {
