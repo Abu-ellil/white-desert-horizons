@@ -225,7 +225,7 @@ function Lightbox({
   onClose: () => void;
   onNavigate: (nextIndex: number) => void;
 }) {
-  const photo = photos[index];
+  const photo = photos[index] as GalleryPhoto;
   const [comments, setComments] = useState<GalleryComment[] | null>(null);
   const [name, setName] = useState("");
   const [text, setText] = useState("");
@@ -244,8 +244,10 @@ function Lightbox({
     const start = touchStartX.current;
     touchStartX.current = null;
     if (start === null) return;
-    const dx = e.changedTouches[0]?.clientX - start;
-    if (dx === undefined || Math.abs(dx) < 50) return; // ignore tiny drags
+    const endX = e.changedTouches[0]?.clientX;
+    if (endX === undefined) return;
+    const dx = endX - start;
+    if (Math.abs(dx) < 50) return; // ignore tiny drags
     if (dx < 0)
       goNext(); // swipe left → next
     else goPrev(); // swipe right → previous
