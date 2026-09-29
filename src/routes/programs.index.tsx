@@ -12,7 +12,13 @@ export const Route = createFileRoute("/programs/")({
         content:
           "All official private programs: White Desert Overnight, Bahariya & White Desert Expedition, Siwa Oasis and Fayoum Desert Safari.",
       },
+      { property: "og:title", content: `Official Tour Programs | ${siteConfig.name}` },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://www.whitedeserthorizons.com/programs" },
+      { property: "og:image", content: "https://www.whitedeserthorizons.com/og-image.jpg" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://www.whitedeserthorizons.com/programs" }],
   }),
   component: ProgramsIndex,
 });

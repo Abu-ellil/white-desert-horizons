@@ -9,6 +9,7 @@ export const Route = createFileRoute("/programs/$slug")({
       ? `${program.titleEn} | ${siteConfig.name}`
       : `Program | ${siteConfig.name}`;
     const description = program?.subtitle ?? "Private Egypt desert tour program.";
+    const url = `https://www.whitedeserthorizons.com/programs/${params.slug}`;
     return {
       meta: [
         { title },
@@ -16,7 +17,12 @@ export const Route = createFileRoute("/programs/$slug")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
+        { property: "og:url", content: url },
+        { property: "og:image", content: "https://www.whitedeserthorizons.com/og-image.jpg" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:image", content: "https://www.whitedeserthorizons.com/og-image.jpg" },
       ],
+      links: [{ rel: "canonical", href: url }],
     };
   },
   component: ProgramRoute,

@@ -23,7 +23,20 @@ import { galleryUrl } from "@/lib/gallery-url";
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
-    meta: [{ title: "Gallery | WHITE DESERT HORIZONS" }],
+    meta: [
+      { title: "Gallery | WHITE DESERT HORIZONS" },
+      {
+        name: "description",
+        content:
+          "Photographs from private journeys through Egypt's White Desert — formations, camps and desert light.",
+      },
+      { property: "og:title", content: "Gallery | WHITE DESERT HORIZONS" },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://www.whitedeserthorizons.com/gallery" },
+      { property: "og:image", content: "https://www.whitedeserthorizons.com/og-image.jpg" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "canonical", href: "https://www.whitedeserthorizons.com/gallery" }],
   }),
   component: GalleryPage,
 });

@@ -82,6 +82,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "author", content: "WHITE DESERT HORIZONS" },
       { property: "og:site_name", content: "WHITE DESERT HORIZONS" },
       { property: "og:type", content: "website" },
+      {
+        property: "og:image",
+        content: "https://www.whitedeserthorizons.com/og-image.jpg",
+      },
+      { property: "og:image:width", content: "2400" },
+      { property: "og:image:height", content: "1260" },
+      {
+        property: "og:image:alt",
+        content: "White Desert chalk formations under an Egyptian desert sky",
+      },
+      {
+        name: "twitter:image",
+        content: "https://www.whitedeserthorizons.com/og-image.jpg",
+      },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [

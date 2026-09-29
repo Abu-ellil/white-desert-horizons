@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+  CalendarCheck,
   Check,
   Eye,
   Globe,
@@ -154,6 +155,12 @@ function Panel({ onSignOut }: { onSignOut: () => void }) {
             icon={<ImageIcon className="h-5 w-5" />}
             title="Media Studio"
             desc="Upload photographs to Cloudinary, organize albums, favorites and deletion."
+          />
+          <AdminCard
+            to="/admin/bookings"
+            icon={<CalendarCheck className="h-5 w-5" />}
+            title="Booking requests"
+            desc="Every “Plan your journey” submission — contact details, dates and messages."
           />
           <AdminCard
             to="/admin/testimonials"

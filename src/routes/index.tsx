@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LandingPage } from "@/components/travel/LandingPage";
+import { faqs } from "@/components/travel/faq-content";
 import { siteConfig } from "@/config/site";
+
+const ORIGIN = "https://www.whitedeserthorizons.com";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,7 +22,9 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "/" },
+      { property: "og:image", content: "https://www.whitedeserthorizons.com/og-image.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://www.whitedeserthorizons.com/og-image.jpg" },
     ],
     links: [{ rel: "canonical", href: "/" }],
     scripts: [
@@ -50,6 +55,18 @@ export const Route = createFileRoute("/")({
             addressLocality: "[BUSINESS CITY TO BE CONFIRMED]",
           },
           url: "/",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqs.map(([question, answer]) => ({
+            "@type": "Question",
+            name: question,
+            acceptedAnswer: { "@type": "Answer", text: answer },
+          })),
         }),
       },
     ],
