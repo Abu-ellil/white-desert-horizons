@@ -36,6 +36,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { navigation, siteConfig } from "@/config/site";
 import { getApprovedTestimonials, submitTestimonial } from "@/lib/testimonials";
+import { getFeaturedPhotos, type FeaturedPhoto } from "@/lib/gallery";
 import { Stars } from "@/components/travel/TestimonialStars";
 
 const experienceLinks: Record<string, string> = {
@@ -530,15 +531,87 @@ function GalleryImage({
   );
 }
 
+/** A slot in the 2×2 landing mosaic: source photo key + layout class. */
+type MosaicSlot = {
+  key: string;
+  fallbackSrc: string;
+  fallbackAlt: string;
+  caption: string;
+  className: string;
+  width: number;
+  height: number;
+};
+
+/** Fixed mosaic geometry — the 4 featured photos fill these slots in order. */
+const MOSAIC: MosaicSlot[] = [
+  {
+    key: "forms",
+    fallbackSrc: formsImage,
+    fallbackAlt: "Golden sunrise across mushroom-shaped White Desert formations",
+    caption: "Dawn · White Desert",
+    className: "col-span-2 sm:row-span-2",
+    width: 1600,
+    height: 1200,
+  },
+  {
+    key: "hero",
+    fallbackSrc: heroImage,
+    fallbackAlt: "Expansive White Desert Egypt horizon at blue hour",
+    caption: "Last light",
+    className: "sm:col-span-2",
+    width: 1920,
+    height: 1280,
+  },
+  {
+    key: "camp",
+    fallbackSrc: campImage,
+    fallbackAlt: "Warm lanterns at a private White Desert night camp",
+    caption: "Night camp",
+    className: "",
+    width: 1440,
+    height: 1808,
+  },
+  {
+    key: "contrast",
+    fallbackSrc: contrastImage,
+    fallbackAlt: "Black Desert Egypt volcanic hills overlooking pale chalk terrain",
+    caption: "Black Desert edge",
+    className: "",
+    width: 1600,
+    height: 1200,
+  },
+];
+
 function Gallery() {
   // Hydrate real counts from photo_likes once on mount (decorative on failure).
   const [likes, setLikes] = useState<Record<string, number>>({});
+  // Hand-picked photos from the studio; empty until you feature some.
+  const [featured, setFeatured] = useState<FeaturedPhoto[] | null>(null);
   useEffect(() => {
+    import("@/lib/gallery")
+      .then(({ getFeaturedPhotos }) => getFeaturedPhotos())
+      .then((rows) => setFeatured(rows ?? []))
+      .catch(() => setFeatured([]));
     import("@/lib/likes")
       .then(({ getLandingLikes }) => getLandingLikes())
       .then((counts) => setLikes(counts ?? {}))
       .catch(() => {});
   }, []);
+
+  // Featured photos fill the fixed slots in order; any shortfall falls back
+  // to the built-in photo for that slot, so the layout never breaks.
+  const slots = MOSAIC.map((slot, i) => {
+    const pick = featured?.[i];
+    if (!pick || !pick.url)
+      return { ...slot, photo: slot.key, src: slot.fallbackSrc, alt: slot.fallbackAlt };
+    return {
+      ...slot,
+      photo: pick.publicId,
+      src: pick.url.replace("/upload/", "/upload/f_auto,q_auto,w_1200/"),
+      alt: pick.title || slot.fallbackAlt,
+      caption: pick.title || slot.caption,
+    };
+  });
 
   return (
     <section id="gallery" className="bg-surface-dark py-24 text-surface-dark-foreground sm:py-32">
@@ -552,44 +625,19 @@ function Gallery() {
         </p>
       </div>
       <div className="grid h-[1150px] grid-cols-2 gap-1 sm:h-[900px] sm:grid-cols-4 sm:grid-rows-2">
-        <GalleryImage
-          photo="forms"
-          src={formsImage}
-          alt="Golden sunrise across mushroom-shaped White Desert formations"
-          width={1600}
-          height={1200}
-          caption="Dawn · White Desert"
-          className="col-span-2 sm:row-span-2"
-          initialCount={likes["forms"]}
-        />
-        <GalleryImage
-          photo="hero"
-          src={heroImage}
-          alt="Expansive White Desert Egypt horizon at blue hour"
-          width={1920}
-          height={1280}
-          caption="Last light"
-          className="sm:col-span-2"
-          initialCount={likes["hero"]}
-        />
-        <GalleryImage
-          photo="camp"
-          src={campImage}
-          alt="Warm lanterns at a private White Desert night camp"
-          width={1440}
-          height={1808}
-          caption="Night camp"
-          initialCount={likes["camp"]}
-        />
-        <GalleryImage
-          photo="contrast"
-          src={contrastImage}
-          alt="Black Desert Egypt volcanic hills overlooking pale chalk terrain"
-          width={1600}
-          height={1200}
-          caption="Black Desert edge"
-          initialCount={likes["contrast"]}
-        />
+        {slots.map((slot) => (
+          <GalleryImage
+            key={slot.key}
+            photo={slot.photo}
+            src={slot.src}
+            alt={slot.alt}
+            width={slot.width}
+            height={slot.height}
+            caption={slot.caption}
+            className={slot.className}
+            initialCount={likes[slot.photo]}
+          />
+        ))}
       </div>
       <div className="mt-10 flex justify-center">
         <Link

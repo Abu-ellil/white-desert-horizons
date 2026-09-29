@@ -4,6 +4,7 @@ import {
   Check,
   Copy,
   FolderInput,
+  Home,
   Loader2,
   Pencil,
   RefreshCw,
@@ -20,6 +21,7 @@ import {
   registerUploadedMedia,
   removeMedia,
   setMediaCaptionFn,
+  setMediaFeaturedFn,
   toggleMediaFavorite,
   type MediaRow,
 } from "@/lib/studio";
@@ -398,6 +400,19 @@ function StudioPage() {
       );
     } catch {
       setError("Could not update the favorite — try again.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  /** Feature on the landing page. Max 4 — featuring a 5th bumps the oldest. */
+  async function toggleFeatured(row: MediaRow) {
+    setBusyId(row.id);
+    try {
+      await setMediaFeaturedFn({ data: { id: row.id, featured: !row.featured } });
+      await refresh();
+    } catch {
+      setError("Could not update the homepage selection — try again.");
     } finally {
       setBusyId(null);
     }
@@ -809,6 +824,25 @@ function StudioPage() {
 
               {/* Hover actions */}
               <div className="absolute inset-x-0 top-2 flex justify-end gap-1 px-2 opacity-0 transition-opacity group-hover:opacity-100">
+                <button
+                  type="button"
+                  onClick={() => void toggleFeatured(row)}
+                  aria-label={
+                    row.featured ? "Remove from homepage" : "Show on the homepage gallery"
+                  }
+                  title={
+                    row.featured
+                      ? "On the homepage — click to remove"
+                      : "Show on the homepage gallery (max 4)"
+                  }
+                  className={`flex h-8 w-8 items-center justify-center backdrop-blur transition-colors ${
+                    row.featured
+                      ? "bg-emerald-500 text-white opacity-100"
+                      : "bg-black/40 text-white hover:bg-emerald-600/80"
+                  }`}
+                >
+                  <Home className="h-3.5 w-3.5" />
+                </button>
                 <button
                   type="button"
                   onClick={() => void toggleFavorite(row)}

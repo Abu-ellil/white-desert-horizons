@@ -62,6 +62,36 @@ function parsePublicId(input: unknown): { publicId: string } {
   return { publicId };
 }
 
+export type FeaturedPhoto = {
+  id: string;
+  publicId: string;
+  url: string;
+  width: number;
+  height: number;
+  title: string;
+  album: string;
+  position: number;
+};
+
+/** Photos hand-picked for the landing-page gallery (featured flag, max 4). */
+export const getFeaturedPhotos = createServerFn({ method: "GET" }).handler(
+  async (): Promise<FeaturedPhoto[]> => {
+    const { getAnyCollection } = await import("@/lib/db");
+    const col = await getAnyCollection("media");
+    const docs = await col.find({ featured: true }).sort({ createdAt: -1 }).limit(4).toArray();
+    return docs.map((d) => ({
+      id: String(d["_id"]),
+      publicId: String(d["publicId"] ?? ""),
+      url: String(d["url"] ?? ""),
+      width: Number(d["width"] ?? 0),
+      height: Number(d["height"] ?? 0),
+      title: String(d["title"] ?? ""),
+      album: String(d["album"] ?? ""),
+      position: 0,
+    }));
+  },
+);
+
 /** Like counts for a batch of keys (photo_likes collection, keyed by `photo`). */
 export const getGalleryLikes = createServerFn({ method: "GET" })
   .validator((input: unknown) => {

@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Heart, Loader2, MessageCircle, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Loader2,
+  MessageCircle,
+  X,
+} from "lucide-react";
 
 import {
   addGalleryComment,
@@ -194,31 +202,65 @@ function GalleryPage() {
         </div>
       </div>
 
-      {openPhoto && <Lightbox photo={openPhoto} onClose={() => setOpenPhoto(null)} />}
+      {openPhoto !== null && (
+        <Lightbox
+          photos={shown}
+          index={shown.findIndex((p) => p.id === openPhoto.id)}
+          onClose={() => setOpenPhoto(null)}
+          onNavigate={(next) => setOpenPhoto(shown[next] ?? null)}
+        />
+      )}
     </main>
   );
 }
 
-function Lightbox({ photo, onClose }: { photo: GalleryPhoto; onClose: () => void }) {
+function Lightbox({
+  photos,
+  index,
+  onClose,
+  onNavigate,
+}: {
+  photos: GalleryPhoto[];
+  index: number;
+  onClose: () => void;
+  onNavigate: (nextIndex: number) => void;
+}) {
+  const photo = photos[index];
   const [comments, setComments] = useState<GalleryComment[] | null>(null);
   const [name, setName] = useState("");
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [commentError, setCommentError] = useState("");
 
+  const hasPrev = index > 0;
+  const hasNext = index < photos.length - 1;
+
+  const goPrev = useCallback(() => {
+    if (hasPrev) onNavigate(index - 1);
+  }, [hasPrev, index, onNavigate]);
+
+  const goNext = useCallback(() => {
+    if (hasNext) onNavigate(index + 1);
+  }, [hasNext, index, onNavigate]);
+
   useEffect(() => {
+    if (!photo) return;
     listGalleryComments({ data: { publicId: photo.publicId } })
       .then((rows) => setComments(rows as unknown as GalleryComment[]))
       .catch(() => setComments([]));
-  }, [photo.publicId]);
+  }, [photo?.publicId]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") goNext(); // LTR: left arrow = next photo
+      if (e.key === "ArrowRight") goPrev();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, goNext, goPrev]);
+
+  if (!photo) return null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -241,6 +283,8 @@ function Lightbox({ photo, onClose }: { photo: GalleryPhoto; onClose: () => void
     }
   }
 
+  if (!photo) return null;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm sm:p-8"
@@ -258,6 +302,33 @@ function Lightbox({ photo, onClose }: { photo: GalleryPhoto; onClose: () => void
       >
         <X className="h-6 w-6" />
       </button>
+
+      {/* Prev / next arrows */}
+      {hasPrev && (
+        <button
+          type="button"
+          onClick={goPrev}
+          aria-label="Previous photo"
+          className="absolute left-3 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white/90 backdrop-blur-sm transition-colors hover:border-white/50 hover:text-white sm:left-6"
+        >
+          <ChevronRight className="h-7 w-7" />
+        </button>
+      )}
+      {hasNext && (
+        <button
+          type="button"
+          onClick={goNext}
+          aria-label="Next photo"
+          className="absolute right-3 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white/90 backdrop-blur-sm transition-colors hover:border-white/50 hover:text-white sm:right-6"
+        >
+          <ChevronLeft className="h-7 w-7" />
+        </button>
+      )}
+
+      {/* Counter */}
+      <p className="absolute left-1/2 top-5 -translate-x-1/2 text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
+        {index + 1} / {photos.length}
+      </p>
       <div className="flex max-h-full w-full max-w-5xl flex-col overflow-hidden border border-white/10 bg-surface-dark lg:flex-row">
         <div className="flex min-h-0 flex-1 items-center justify-center bg-black/40">
           <img

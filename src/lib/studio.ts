@@ -116,6 +116,20 @@ export const toggleMediaFavorite = createServerFn({ method: "POST" })
     await setMediaFavorite(data.id, data.favorite);
   });
 
+/** Feature a photo on the landing-page gallery (max 4 — oldest is bumped out). */
+export const setMediaFeaturedFn = createServerFn({ method: "POST" })
+  .validator((input: unknown) => {
+    const { id } = parseId(input);
+    const featured = Boolean((input as { featured?: unknown })?.featured);
+    return { id, featured };
+  })
+  .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/auth");
+    await requireAdmin();
+    const { setMediaFeatured } = await import("@/lib/media");
+    await setMediaFeatured(data.id, data.featured);
+  });
+
 export const setMediaCaptionFn = createServerFn({ method: "POST" })
   .validator((input: unknown) => {
     const { id } = parseId(input);

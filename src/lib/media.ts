@@ -25,6 +25,7 @@ export type MediaRow = {
   description: string;
   tags: string[];
   favorite: boolean;
+  featured: boolean;
   created_at: string;
 };
 
@@ -49,6 +50,7 @@ export function toMediaRow(doc: MediaDoc): MediaRow {
     description: String(doc.description ?? ""),
     tags: Array.isArray(doc.tags) ? doc.tags.map(String).slice(0, 12) : [],
     favorite: Boolean(doc.favorite),
+    featured: Boolean(doc.featured),
     created_at:
       doc.createdAt instanceof Date
         ? doc.createdAt.toISOString().slice(0, 19).replace("T", " ")
@@ -109,6 +111,28 @@ export async function setMediaFavorite(id: string, favorite: boolean): Promise<v
   const col = await getCollection();
   const { ObjectId } = await import("mongodb");
   await col.updateOne({ _id: new ObjectId(id) }, { $set: { favorite } });
+}
+
+/**
+ * Toggle whether a photo appears in the landing-page gallery. Enforces the
+ * 4-slot layout: featuring a 5th photo auto-unfeatures the oldest one (FIFO).
+ */
+export async function setMediaFeatured(id: string, featured: boolean): Promise<void> {
+  const col = await getCollection();
+  const { ObjectId } = await import("mongodb");
+  const max = 4;
+  if (featured) {
+    const current = await col.find({ featured: true }).sort({ createdAt: 1 }).toArray();
+    const already = current.some((d) => String(d._id) === id);
+    const overflow = current.length - (already ? 1 : 0) - max + 1;
+    const toUnfeature = overflow > 0 ? current.slice(0, overflow).map((d) => String(d._id)) : [];
+    if (toUnfeature.length > 0)
+      await col.updateMany(
+        { _id: { $in: toUnfeature.map((x) => new ObjectId(x)) } },
+        { $set: { featured: false } },
+      );
+  }
+  await col.updateOne({ _id: new ObjectId(id) }, { $set: { featured } });
 }
 
 /** Set a human caption/metadata for a photo (shown in the studio and public gallery). */
