@@ -11,11 +11,13 @@ import {
   Loader2,
   LogOut,
   MessageSquareQuote,
+  MousePointerClick,
   ShieldCheck,
   Smartphone,
 } from "lucide-react";
 
 import { adminLogin, adminLogout, changeAdminPassword, getAdminSession } from "@/lib/auth";
+import { getConversionStatsFn, type ConversionStats } from "@/lib/events";
 import { getVisitStatsFn } from "@/lib/tracking";
 import type { VisitStats } from "@/lib/visits";
 
@@ -176,6 +178,8 @@ function Panel({ onSignOut }: { onSignOut: () => void }) {
           />
         </div>
 
+        <Conversions />
+
         <Visitors />
 
         <section className="mt-10 border border-border bg-card p-6">
@@ -227,6 +231,85 @@ function AdminCard({
       <h3 className="mt-4 text-sm font-bold uppercase tracking-[0.12em]">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">{desc}</p>
     </Link>
+  );
+}
+
+/** Conversion events — WhatsApp clicks vs form submissions (the funnel). */
+function Conversions() {
+  const [stats, setStats] = useState<ConversionStats | null>(null);
+  const [error, setError] = useState("");
+
+  const load = useCallback(() => {
+    setError("");
+    getConversionStatsFn()
+      .then((s) => setStats(s as unknown as ConversionStats))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Could not load conversion stats."),
+      );
+  }, []);
+
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 60_000);
+    return () => clearInterval(t);
+  }, [load]);
+
+  return (
+    <section className="mt-10 border border-border bg-card p-6">
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em]">
+          <MousePointerClick className="h-4 w-4 text-primary" /> Conversions
+        </h2>
+        <span className="text-[0.68rem] text-muted-foreground">auto-refreshes every minute</span>
+      </div>
+
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {!stats && !error && <Loader2 className="mt-3 h-4 w-4 animate-spin text-muted-foreground" />}
+
+      {stats && (
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <Stat label="WA clicks (all)" value={stats.totals.whatsappClicks} />
+            <Stat label="Form submits (all)" value={stats.totals.formSubmits} />
+            <Stat label="WA clicks 7d" value={stats.week.whatsappClicks} />
+            <Stat label="Form submits 7d" value={stats.week.formSubmits} />
+            <Stat label="WA clicks today" value={stats.today.whatsappClicks} />
+            <Stat label="Form submits today" value={stats.today.formSubmits} />
+          </div>
+
+          {stats.recent.length > 0 && (
+            <>
+              <h3 className="mt-6 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                Recent actions
+              </h3>
+              <ul className="mt-2 space-y-1 text-xs">
+                {stats.recent.map((e) => (
+                  <li
+                    key={e.id}
+                    className="flex justify-between gap-3 border-b border-border/50 py-1"
+                  >
+                    <span className="font-mono text-muted-foreground">
+                      {new Date(e.ts).toLocaleString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    <span className="flex-1 truncate">
+                      {e.kind === "form_submit" ? "📝 form submit" : "💬 WhatsApp click"}
+                      {e.label && (
+                        <span className="ml-2 font-mono text-muted-foreground">{e.label}</span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </>
+      )}
+    </section>
   );
 }
 
