@@ -38,6 +38,7 @@ import { navigation, siteConfig } from "@/config/site";
 import { getApprovedTestimonials, submitTestimonial } from "@/lib/testimonials";
 import { getFeaturedPhotos, type FeaturedPhoto } from "@/lib/gallery";
 import { Stars } from "@/components/travel/TestimonialStars";
+import { InstagramStrip } from "@/components/travel/InstagramStrip";
 
 const experienceLinks: Record<string, string> = {
   "White Desert Overnight": "/programs/white-desert-overnight",
@@ -1264,6 +1265,7 @@ export function LandingPage() {
         <FAQ />
         <FinalCTA />
       </main>
+      <InstagramStrip />
       <Footer />
       <Button
         asChild
