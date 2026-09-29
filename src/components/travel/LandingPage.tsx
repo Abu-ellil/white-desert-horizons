@@ -578,10 +578,13 @@ function Gallery() {
 
   // Featured photos fill the fixed slots in order; any shortfall falls back
   // to the built-in photo for that slot, so the layout never breaks.
+  // Fallback tiles carry NO like key: likes live in one key space (Cloudinary
+  // public_ids). A fake key (`forms`) would silently split the like counts —
+  // likes on the fallback would never show on /gallery and vice versa.
   const slots = MOSAIC.map((slot, i) => {
     const pick = featured?.[i];
     if (!pick || !pick.url)
-      return { ...slot, photo: slot.key, src: slot.fallbackSrc, alt: slot.fallbackAlt };
+      return { ...slot, photo: null, src: slot.fallbackSrc, alt: slot.fallbackAlt };
     return {
       ...slot,
       photo: pick.publicId,
