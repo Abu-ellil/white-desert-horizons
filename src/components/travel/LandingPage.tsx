@@ -220,21 +220,32 @@ function Hero() {
         width={1920}
         height={1280}
         fetchPriority="high"
-        className="absolute inset-0 h-full w-full object-cover object-[57%_center]"
+        className="hero-kenburns absolute inset-0 h-full w-full object-cover object-[57%_center]"
       />
       <div className="cinematic-overlay absolute inset-0" />
+      <div className="hero-vignette pointer-events-none absolute inset-0" />
+      <div className="hero-grain pointer-events-none absolute inset-0" aria-hidden="true" />
       <Header />
       <div className="relative z-10 mx-auto flex min-h-[92svh] max-w-[1440px] items-end px-5 pb-24 pt-40 sm:px-8 sm:pb-28 lg:px-12 lg:pb-24">
         <div className="max-w-4xl">
-          <p className="mb-6 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-primary">
+          <p
+            className="hero-line mb-6 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-primary"
+            style={{ animationDelay: "150ms" }}
+          >
             White Desert · Egypt
           </p>
-          <h1 className="editorial-title text-[4.25rem] sm:text-8xl lg:text-[8.8rem]">
+          <h1
+            className="hero-line editorial-title text-[4.25rem] sm:text-8xl lg:text-[8.8rem]"
+            style={{ animationDelay: "300ms" }}
+          >
             Beyond the
             <br />
             <em className="font-normal">Horizon.</em>
           </h1>
-          <div className="mt-7 flex max-w-2xl flex-col gap-7 border-l border-primary pl-5 sm:mt-9 sm:flex-row sm:items-end sm:justify-between sm:pl-7">
+          <div
+            className="hero-line mt-7 flex max-w-2xl flex-col gap-7 border-l border-primary pl-5 sm:mt-9 sm:flex-row sm:items-end sm:justify-between sm:pl-7"
+            style={{ animationDelay: "520ms" }}
+          >
             <p className="max-w-md text-base leading-7 text-hero-foreground/80 sm:text-lg">
               Private journeys into Egypt’s White Desert—shaped by open horizons, sculpted chalk,
               and silence.
