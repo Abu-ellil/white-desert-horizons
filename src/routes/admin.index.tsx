@@ -6,6 +6,7 @@ import {
   Eye,
   Globe,
   Image as ImageIcon,
+  ImagePlus,
   KeyRound,
   LayoutDashboard,
   Loader2,
@@ -169,6 +170,12 @@ function Panel({ onSignOut }: { onSignOut: () => void }) {
             icon={<MessageSquareQuote className="h-5 w-5" />}
             title="Traveler reviews"
             desc="Approve, reject or delete guest reviews before they appear on the site."
+          />
+          <AdminCard
+            to="/admin/submissions"
+            icon={<ImagePlus className="h-5 w-5" />}
+            title="Photo submissions"
+            desc="Photos sent in by travelers from the social wall — approve before publishing."
           />
           <AdminCard
             to="/gallery"

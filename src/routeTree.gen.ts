@@ -14,6 +14,7 @@ import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
+import { Route as AdminSubmissionsRouteImport } from './routes/admin.submissions'
 import { Route as AdminTestimonialsRouteImport } from './routes/admin.testimonials'
 import { Route as ProgramsIndexRouteImport } from './routes/programs.index'
 import { Route as ProgramsSlugRouteImport } from './routes/programs.$slug'
@@ -43,6 +44,11 @@ const AdminBookingsRoute = AdminBookingsRouteImport.update({
   path: '/admin/bookings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSubmissionsRoute = AdminSubmissionsRouteImport.update({
+  id: '/admin/submissions',
+  path: '/admin/submissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminTestimonialsRoute = AdminTestimonialsRouteImport.update({
   id: '/admin/testimonials',
   path: '/admin/testimonials',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/gallery': typeof GalleryRoute
   '/studio': typeof StudioRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/testimonials': typeof AdminTestimonialsRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/gallery': typeof GalleryRoute
   '/studio': typeof StudioRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/testimonials': typeof AdminTestimonialsRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/gallery': typeof GalleryRoute
   '/studio': typeof StudioRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/submissions': typeof AdminSubmissionsRoute
   '/admin/testimonials': typeof AdminTestimonialsRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/studio'
     | '/admin/bookings'
+    | '/admin/submissions'
     | '/admin/testimonials'
     | '/programs/$slug'
     | '/admin/'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/studio'
     | '/admin/bookings'
+    | '/admin/submissions'
     | '/admin/testimonials'
     | '/programs/$slug'
     | '/admin'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/studio'
     | '/admin/bookings'
+    | '/admin/submissions'
     | '/admin/testimonials'
     | '/programs/$slug'
     | '/admin/'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   GalleryRoute: typeof GalleryRoute
   StudioRoute: typeof StudioRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
+  AdminSubmissionsRoute: typeof AdminSubmissionsRoute
   AdminTestimonialsRoute: typeof AdminTestimonialsRoute
   ProgramsSlugRoute: typeof ProgramsSlugRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBookingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/submissions': {
+      id: '/admin/submissions'
+      path: '/admin/submissions'
+      fullPath: '/admin/submissions'
+      preLoaderRoute: typeof AdminSubmissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/testimonials': {
       id: '/admin/testimonials'
       path: '/admin/testimonials'
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   GalleryRoute: GalleryRoute,
   StudioRoute: StudioRoute,
   AdminBookingsRoute: AdminBookingsRoute,
+  AdminSubmissionsRoute: AdminSubmissionsRoute,
   AdminTestimonialsRoute: AdminTestimonialsRoute,
   ProgramsSlugRoute: ProgramsSlugRoute,
   AdminIndexRoute: AdminIndexRoute,
