@@ -66,12 +66,6 @@ export async function getAnyCollection(name: string): Promise<Collection<any>> {
     globalStore.__wdhMongoClient = client;
     try {
       await client.connect();
-      // Indexes: created once per cold start, idempotent.
-      await client.db().collection("testimonials").createIndex({ status: 1, createdAt: -1 });
-      await client.db().collection("visits").createIndex({ ts: -1 });
-      await client.db().collection("visits").createIndex({ sid: 1, ts: -1 });
-      await client.db().collection("events").createIndex({ ts: -1 });
-      await client.db().collection("events").createIndex({ kind: 1, ts: -1 });
     } catch (err) {
       // CRITICAL: never cache a failed client — a cached broken client makes every
       // later request throw "Topology is closed" until the lambda recycles.
@@ -82,6 +76,30 @@ export async function getAnyCollection(name: string): Promise<Collection<any>> {
         /* ignore */
       }
       throw err;
+    }
+    // Indexes: created once per cold start, idempotent. Deliberately OUTSIDE the
+    // try above — a createIndex failure is a permissions problem, not a broken
+    // connection. Retrying it as if the connection died threw "not allowed to do
+    // action [createIndex]" on every read (gallery, testimonials, social wall),
+    // and discarded a perfectly good client. Indexes are a performance nicety;
+    // reads and writes must not depend on having the privilege to create one.
+    try {
+      await client.db().collection("testimonials").createIndex({ status: 1, createdAt: -1 });
+      await client.db().collection("visits").createIndex({ ts: -1 });
+      await client.db().collection("visits").createIndex({ sid: 1, ts: -1 });
+      await client.db().collection("events").createIndex({ ts: -1 });
+      await client.db().collection("events").createIndex({ kind: 1, ts: -1 });
+      await client.db().collection("gallery_comments").createIndex({ publicId: 1, createdAt: -1 });
+      await client.db().collection("photo_likes").createIndex({ photo: 1 }, { unique: true });
+      await client
+        .db()
+        .collection("wall_posts")
+        .createIndex({ publicId: 1, handle: 1 }, { unique: true });
+    } catch (err) {
+      console.warn(
+        "[db] index creation skipped (insufficient privileges):",
+        err instanceof Error ? err.message : err,
+      );
     }
   }
   return client.db().collection<any>(name);
