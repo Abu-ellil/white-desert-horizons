@@ -26,7 +26,8 @@ function loadEnvFallback(): void {
 }
 loadEnvFallback();
 
-type EventKind = "visit" | "testimonial" | "booking_request" | "booking" | "like" | "comment";
+type EventKind =
+  "visit" | "testimonial" | "booking_request" | "booking" | "like" | "comment" | "submission";
 
 const ICONS: Record<EventKind, string> = {
   visit: "👀",
@@ -35,6 +36,7 @@ const ICONS: Record<EventKind, string> = {
   booking: "🧭",
   like: "❤️",
   comment: "💬",
+  submission: "📷",
 };
 
 const LABELS: Record<EventKind, string> = {
@@ -44,6 +46,7 @@ const LABELS: Record<EventKind, string> = {
   booking: "حجز جديد!",
   like: "إعجاب جديد بصورة",
   comment: "تعليق جديد على صورة",
+  submission: "صورة جديدة في انتظار المراجعة",
 };
 
 /** Fire-and-forget Telegram message. Safe to call without await. */
