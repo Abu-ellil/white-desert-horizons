@@ -6,6 +6,7 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -35,11 +36,13 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
+  // `error` is typed `unknown` by ErrorBoundaryTypes — the thrown value may not
+  // be an Error at all. Log it for debugging but never render it: the message
+  // can carry internal paths, query text or a Mongo URI.
   const router = useRouter();
   useEffect(() => {
-    console.error(error);
+    console.error("[route error]", error);
   }, [error]);
 
   return (
