@@ -1266,14 +1266,12 @@ export function LandingPage() {
         <Experiences />
         <AfterSunset />
         <WhyUs />
-        <Gallery />
-        <Testimonials />
         <SocialWall />
+        <Testimonials />
         <PlanningForm />
         <FAQ />
         <FinalCTA />
       </main>
-      <InstagramStrip />
       <Footer />
       <CookieConsent />
       <Button

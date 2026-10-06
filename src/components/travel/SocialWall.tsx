@@ -219,7 +219,7 @@ export function SocialWall() {
 
   return (
     <section
-      id="wall"
+      id="gallery"
       className="relative overflow-hidden bg-hero-background py-24 text-hero-foreground sm:py-32"
     >
       <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
