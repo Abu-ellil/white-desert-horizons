@@ -151,20 +151,21 @@ export const getWallFeed = createServerFn({ method: "GET" }).handler(
       width: number;
       height: number;
       title: string;
+      description: string;
       createdAt: Date;
     }> = [];
     try {
-      const docs = await mediaCol
-        .find({ featured: true })
-        .sort({ createdAt: -1 })
-        .limit(12)
-        .toArray();
+      // Newest first across ALL albums — owner shots and approved community
+      // submissions share one chronological feed, so the wall actually shows
+      // what travelers sent in (that is the point of it).
+      const docs = await mediaCol.find({}).sort({ createdAt: -1 }).limit(12).toArray();
       photos = docs.map((d) => ({
         publicId: String(d.publicId ?? ""),
         url: String(d.url ?? ""),
         width: Number(d.width ?? 0),
         height: Number(d.height ?? 0),
         title: String(d.title ?? ""),
+        description: String(d.description ?? ""),
         createdAt: (d.createdAt instanceof Date ? d.createdAt : new Date(0)) as Date,
       }));
     } catch {
@@ -196,6 +197,7 @@ export const getWallFeed = createServerFn({ method: "GET" }).handler(
         width: 0,
         height: 0,
         title: p.caption,
+        description: p.alt,
         createdAt: new Date(Date.now() - i * 86_400_000),
       }));
     }
@@ -228,7 +230,7 @@ export const getWallFeed = createServerFn({ method: "GET" }).handler(
         height: p.height,
         author: author || "",
         handle: handle || "",
-        caption: social ? String(social["caption"] ?? "") : p.title,
+        caption: social ? String(social["caption"] ?? "") : p.description || p.title,
         created_at: p.createdAt.toISOString(),
         likes: counts.get(p.publicId) ?? 0,
         likedByMe: liked.has(p.publicId),
