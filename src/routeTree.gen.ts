@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GalleryRouteImport } from './routes/gallery'
+import { Route as SocialRouteImport } from './routes/social'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
@@ -27,6 +28,11 @@ const IndexRoute = IndexRouteImport.update({
 const GalleryRoute = GalleryRouteImport.update({
   id: '/gallery',
   path: '/gallery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SocialRoute = SocialRouteImport.update({
+  id: '/social',
+  path: '/social',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudioRoute = StudioRouteImport.update({
@@ -68,6 +74,7 @@ const ProgramsSlugRoute = ProgramsSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/gallery': typeof GalleryRoute
+  '/social': typeof SocialRoute
   '/studio': typeof StudioRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/submissions': typeof AdminSubmissionsRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/gallery': typeof GalleryRoute
+  '/social': typeof SocialRoute
   '/studio': typeof StudioRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/submissions': typeof AdminSubmissionsRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/gallery': typeof GalleryRoute
+  '/social': typeof SocialRoute
   '/studio': typeof StudioRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/submissions': typeof AdminSubmissionsRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/gallery'
+    | '/social'
     | '/studio'
     | '/admin/bookings'
     | '/admin/submissions'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/gallery'
+    | '/social'
     | '/studio'
     | '/admin/bookings'
     | '/admin/submissions'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/gallery'
+    | '/social'
     | '/studio'
     | '/admin/bookings'
     | '/admin/submissions'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   GalleryRoute: typeof GalleryRoute
+  SocialRoute: typeof SocialRoute
   StudioRoute: typeof StudioRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
   AdminSubmissionsRoute: typeof AdminSubmissionsRoute
@@ -161,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/gallery'
       fullPath: '/gallery'
       preLoaderRoute: typeof GalleryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/social': {
+      id: '/social'
+      path: '/social'
+      fullPath: '/social'
+      preLoaderRoute: typeof SocialRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/studio': {
@@ -218,6 +238,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GalleryRoute: GalleryRoute,
+  SocialRoute: SocialRoute,
   StudioRoute: StudioRoute,
   AdminBookingsRoute: AdminBookingsRoute,
   AdminSubmissionsRoute: AdminSubmissionsRoute,

@@ -187,7 +187,6 @@ export const getWallFeed = createServerFn({ method: "GET" })
         description: String(d.description ?? ""),
         createdAt: (d.createdAt instanceof Date ? d.createdAt : new Date(0)) as Date,
       }));
-      void total;
     } catch {
       photos = [];
       hasMore = false;
