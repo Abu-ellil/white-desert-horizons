@@ -97,6 +97,10 @@ function AdminSubmissions() {
     return act(id, (opts) => reviewSubmission({ data: { id: opts.data, status } }));
   }
 
+  function remove(id: string) {
+    return act(id, (opts) => removeSubmission({ data: { id: opts.data } }));
+  }
+
   const pending = rows?.filter((r) => r.status === "pending") ?? [];
   const published = rows?.filter((r) => r.status === "approved") ?? [];
   const rejected = rows?.filter((r) => r.status === "rejected") ?? [];
@@ -162,7 +166,7 @@ function AdminSubmissions() {
                   <button
                     type="button"
                     disabled={busyId === r.id}
-                    onClick={() => act(r.id, removeSubmission)}
+                    onClick={() => remove(r.id)}
                     className="inline-flex items-center gap-2 border border-border px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-red-400 hover:text-red-600 disabled:opacity-50"
                   >
                     <Trash2 className="h-3.5 w-3.5" /> Delete
@@ -191,7 +195,7 @@ function AdminSubmissions() {
                   <button
                     type="button"
                     disabled={busyId === r.id}
-                    onClick={() => act(r.id, removeSubmission)}
+                    onClick={() => remove(r.id)}
                     className="inline-flex items-center gap-2 border border-border px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-red-400 hover:text-red-600 disabled:opacity-50"
                   >
                     <Trash2 className="h-3.5 w-3.5" /> Delete
@@ -220,7 +224,7 @@ function AdminSubmissions() {
                   <button
                     type="button"
                     disabled={busyId === r.id}
-                    onClick={() => act(r.id, removeSubmission)}
+                    onClick={() => remove(r.id)}
                     className="inline-flex items-center gap-2 border border-border px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-red-400 hover:text-red-600 disabled:opacity-50"
                   >
                     <Trash2 className="h-3.5 w-3.5" /> Delete forever
