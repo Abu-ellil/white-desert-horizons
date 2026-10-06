@@ -33,6 +33,7 @@ type Post = {
   caption: string;
   created_at: string;
   likes: number;
+  likedByMe: boolean;
   commentCount: number;
 };
 
@@ -100,6 +101,29 @@ function compact(n: number): string {
   return `${(n / 1_000_000).toFixed(1)}m`;
 }
 
+/**
+ * Stable per-browser identity for likes. Random, stored in localStorage — it
+ * carries no user data; the server only uses it to make like/unlike symmetric
+ * (the same id reverts the same like) and to stop one browser inflating a
+ * counter. The feed's likedByMe is derived from this id server-side.
+ */
+function getClientId(): string {
+  const KEY = "wdh-client-id";
+  try {
+    const existing = localStorage.getItem(KEY);
+    if (existing && /^[\w-]{8,64}$/.test(existing)) return existing;
+    const fresh =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID().replace(/-/g, "").slice(0, 32)
+        : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+    localStorage.setItem(KEY, fresh);
+    return fresh;
+  } catch {
+    // Private mode without storage — ephemeral id, likes still work per page load.
+    return `ephemeral${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  }
+}
+
 /** Page size for the social feed — server caps at 24. */
 const PAGE_SIZE = 12;
 
@@ -116,11 +140,12 @@ export function SocialFeed() {
     try {
       const { getWallFeed } = await import("@/lib/social-wall");
       const res = (await getWallFeed({
-        data: { page: 1, pageSize: PAGE_SIZE },
+        data: { page: 1, pageSize: PAGE_SIZE, clientId: getClientId() },
       })) as unknown as { posts: Post[]; hasMore: boolean };
       setPosts(res.posts);
       setHasMore(res.hasMore);
       setCounts(Object.fromEntries(res.posts.map((r) => [r.publicId, r.likes])));
+      setLiked(Object.fromEntries(res.posts.map((r) => [r.publicId, r.likedByMe])));
       setFailed(false);
     } catch {
       // Mongo unreachable → the feed still renders from the built-in photos.
@@ -138,7 +163,7 @@ export function SocialFeed() {
       const { getWallFeed } = await import("@/lib/social-wall");
       const next = Math.floor((posts?.length ?? 0) / PAGE_SIZE) + 1;
       const res = (await getWallFeed({
-        data: { page: next, pageSize: PAGE_SIZE },
+        data: { page: next, pageSize: PAGE_SIZE, clientId: getClientId() },
       })) as unknown as { posts: Post[]; hasMore: boolean };
       setPosts((cur) => {
         const seen = new Set((cur ?? []).map((p) => p.publicId));
@@ -147,6 +172,10 @@ export function SocialFeed() {
       setCounts((c) => ({
         ...c,
         ...Object.fromEntries(res.posts.map((r) => [r.publicId, r.likes])),
+      }));
+      setLiked((l) => ({
+        ...l,
+        ...Object.fromEntries(res.posts.map((r) => [r.publicId, r.likedByMe])),
       }));
       setHasMore(res.hasMore);
     } catch {
@@ -160,23 +189,8 @@ export function SocialFeed() {
     load();
   }, [load]);
 
-  // Restore which posts this browser already liked.
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("wdh-wall-liked");
-      if (raw) setLiked(JSON.parse(raw));
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
   const persistLiked = (next: Record<string, boolean>) => {
     setLiked(next);
-    try {
-      localStorage.setItem("wdh-wall-liked", JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
   };
 
   // With no DB the feed is empty; fall back to the built-in set so the page
@@ -194,24 +208,37 @@ export function SocialFeed() {
       caption: img.alt,
       created_at: new Date(Date.now() - i * 86_400_000).toISOString(),
       likes: counts[publicId] ?? 0,
+      likedByMe: Boolean(liked[publicId]),
       commentCount: 0,
     }));
-  }, [posts, counts]);
+  }, [posts, counts, liked]);
 
   async function like(post: Post) {
-    if (liked[post.publicId]) return;
-    const next = { ...liked, [post.publicId]: true };
+    const wasLiked = Boolean(liked[post.publicId]);
+    // Optimistic toggle — the server is the source of truth and its answer
+    // (liked + count) overwrites this, so a flaky connection cannot desync.
+    const next = { ...liked, [post.publicId]: !wasLiked };
     persistLiked(next);
-    setCounts((c) => ({ ...c, [post.publicId]: (c[post.publicId] ?? 0) + 1 }));
+    setCounts((c) => ({
+      ...c,
+      [post.publicId]: Math.max(0, (c[post.publicId] ?? 0) + (wasLiked ? -1 : 1)),
+    }));
     try {
       const { likeWallPost } = await import("@/lib/social-wall");
-      const res = (await likeWallPost({ data: { publicId: post.publicId } })) as {
-        count?: number;
-      };
+      const res = (await likeWallPost({
+        data: { publicId: post.publicId, clientId: getClientId() },
+      })) as { liked?: boolean; count?: number };
       if (typeof res?.count === "number")
         setCounts((c) => ({ ...c, [post.publicId]: res.count as number }));
+      if (typeof res?.liked === "boolean")
+        setLiked((l) => ({ ...l, [post.publicId]: res.liked as boolean }));
     } catch {
-      /* best-effort, like already shown optimistically */
+      // Roll the optimistic change back — the click did not register.
+      persistLiked({ ...liked, [post.publicId]: wasLiked });
+      setCounts((c) => ({
+        ...c,
+        [post.publicId]: Math.max(0, (c[post.publicId] ?? 0) + (wasLiked ? 1 : -1)),
+      }));
     }
   }
 
@@ -426,9 +453,8 @@ function WallCard({
         <button
           type="button"
           onClick={onLike}
-          disabled={liked}
           aria-pressed={liked}
-          aria-label={liked ? "Liked" : "Like this post"}
+          aria-label={liked ? "Unlike this post" : "Like this post"}
           className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.72rem] transition-colors ${
             liked ? "text-red-300" : "text-hero-foreground/75 hover:bg-white/5 hover:text-red-300"
           }`}

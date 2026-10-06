@@ -143,12 +143,12 @@ export const getWallFeed = createServerFn({ method: "GET" })
     // Landing preview uses 4; the social page paginates at 12. Hard cap keeps
     // any caller from requesting the whole collection in one shot.
     const pageSize = Math.max(1, Math.min(24, rawSize));
-    return { page, pageSize };
+    // Optional per-browser identity so the feed can mark likedByMe correctly.
+    const rawClient = String(v["clientId"] ?? "").trim();
+    const clientId = /^[\w-]{8,64}$/.test(rawClient) ? rawClient : null;
+    return { page, pageSize, clientId };
   })
   .handler(async ({ data }): Promise<{ posts: WallPost[]; hasMore: boolean }> => {
-    // The browser identity that liked these — set from localStorage by the client.
-    const liked = new Set<string>();
-
     const { getAnyCollection } = await import("@/lib/db");
     const mediaCol = await getAnyCollection("media");
     const likeCol = await getAnyCollection("photo_likes");
@@ -228,7 +228,12 @@ export const getWallFeed = createServerFn({ method: "GET" })
       .toArray()
       .catch(() => []);
     const counts = new Map<string, number>();
-    for (const d of likeDocs) counts.set(String(d.photo), Number(d.count ?? 0));
+    for (const d of likeDocs) {
+      // Count is derived from the voters array when present; the numeric
+      // `count` field is the legacy shape from before unlike existed.
+      const voters = Array.isArray(d.voters) ? (d.voters as string[]) : null;
+      counts.set(String(d.photo), voters ? voters.length : Number(d.count ?? 0));
+    }
 
     const commentDocs = await commentCol
       .find({ publicId: { $in: ids } })
@@ -254,7 +259,13 @@ export const getWallFeed = createServerFn({ method: "GET" })
           caption: social ? String(social["caption"] ?? "") : p.description || p.title,
           created_at: p.createdAt.toISOString(),
           likes: counts.get(p.publicId) ?? 0,
-          likedByMe: liked.has(p.publicId),
+          likedByMe: data.clientId
+            ? (() => {
+                const d = likeDocs.find((x) => String(x.photo) === p.publicId);
+                const voters = d && Array.isArray(d.voters) ? (d.voters as string[]) : [];
+                return voters.includes(data.clientId as string);
+              })()
+            : false,
           commentCount: commentCounts.get(p.publicId) ?? 0,
         };
       }),
@@ -298,17 +309,46 @@ export const setWallPost = createServerFn({ method: "POST" })
   });
 
 export const likeWallPost = createServerFn({ method: "POST" })
-  .validator(parsePublicIdLike)
+  .validator((input: unknown) => {
+    const v = (input ?? {}) as Record<string, unknown>;
+    const publicId = String(v["publicId"] ?? "");
+    if (!PUBLIC_ID_RE.test(publicId)) throw new Error("Invalid photo");
+    // Client identity: a stable random id per browser. The server never sees
+    // anything else about the visitor — this only exists so unlike can revert
+    // the same like the client cast, and one browser cannot inflate the count
+    // by clicking fifty times.
+    const clientId = String(v["clientId"] ?? "").trim();
+    if (!/^[\w-]{8,64}$/.test(clientId)) throw new Error("Invalid client identity");
+    return { publicId, clientId };
+  })
   .handler(async ({ data }) => {
     const { getAnyCollection } = await import("@/lib/db");
     const col = await getAnyCollection("photo_likes");
-    await col.updateOne(
+    // One document per photo, one entry per client in `voters` — the count is
+    // derived from the voter set, so it can never drift from reality.
+    const doc = await col.findOneAndUpdate(
       { photo: data.publicId },
-      { $inc: { count: 1 }, $set: { lastAt: new Date() } },
-      { upsert: true },
+      [
+        {
+          $set: {
+            voters: {
+              $cond: {
+                if: { $in: [data.clientId, { $ifNull: ["$voters", []] }] },
+                then: { $setDifference: ["$voters", [data.clientId]] }, // unlike
+                else: { $concatArrays: [{ $ifNull: ["$voters", []] }, [data.clientId]] }, // like
+              },
+            },
+            lastAt: new Date(),
+          },
+        },
+        { $set: { count: { $size: "$voters" } } },
+      ],
+      { upsert: true, returnDocument: "after" },
     );
-    const doc = await col.findOne({ photo: data.publicId });
-    return { ok: true, count: Number(doc?.count ?? 1) };
+    const docRecord = doc as Record<string, unknown> | null;
+    const voters = Array.isArray(docRecord?.["voters"]) ? (docRecord["voters"] as string[]) : [];
+    const liked = voters.includes(data.clientId);
+    return { ok: true, liked, count: voters.length };
   });
 
 function parsePublicIdLike(input: unknown): { publicId: string } {
