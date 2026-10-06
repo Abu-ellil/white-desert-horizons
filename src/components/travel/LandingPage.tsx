@@ -217,7 +217,7 @@ function Hero() {
     >
       <img
         src={heroImage}
-        srcSet="/assets/white-desert-hero-768.jpg 768w, /assets/white-desert-hero-1280.jpg 1280w"
+        srcSet="/white-desert-hero-768.jpg 768w, /white-desert-hero-1280.jpg 1280w"
         sizes="100vw"
         alt="White Desert Egypt limestone formations glowing at sunset"
         width={1920}
@@ -1175,7 +1175,7 @@ function FinalCTA() {
   return (
     <section className="relative min-h-[680px] overflow-hidden bg-hero-background text-hero-foreground">
       <img
-        src="/assets/white-desert-hero-1280.jpg"
+        src="/white-desert-hero-1280.jpg"
         alt="White Desert formations extending toward the Egyptian horizon"
         width={1280}
         height={853}
