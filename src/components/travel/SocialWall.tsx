@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Heart, MessageCircle, Send, ShieldCheck, Loader2 } from "lucide-react";
+import { Camera, Heart, Instagram, MessageCircle, Send, ShieldCheck, Loader2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 import heroImage from "@/assets/white-desert-hero.jpg";
 import campImage from "@/assets/white-desert-camp.jpg";
 import formsImage from "@/assets/white-desert-forms.jpg";
 import contrastImage from "@/assets/black-white-desert.jpg";
+import { siteConfig } from "@/config/site";
 import { SubmitPhoto } from "@/components/travel/SubmitPhoto";
 
 /**
@@ -195,10 +197,29 @@ export function SocialWall() {
             <p className="max-w-sm text-sm leading-7 text-hero-foreground/60">
               Tag your moment from a journey. Liked and commented in real time.
             </p>
-            <p className="inline-flex items-center gap-2 text-[0.62rem] uppercase tracking-[0.14em] text-hero-foreground/45">
-              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-              No links, ever
-            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Full archive lives on /gallery — the wall shows the newest 12. */}
+              <Link
+                to="/gallery"
+                className="inline-flex items-center gap-2 border border-primary/40 px-4 py-2 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+              >
+                <Camera className="h-3.5 w-3.5" />
+                Full gallery
+              </Link>
+              <a
+                href={siteConfig.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 border border-hero-foreground/25 px-4 py-2 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-hero-foreground/80 transition-colors hover:border-primary hover:text-primary"
+              >
+                <Instagram className="h-3.5 w-3.5" />
+                Instagram
+              </a>
+              <p className="inline-flex items-center gap-2 text-[0.62rem] uppercase tracking-[0.14em] text-hero-foreground/45">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                No links, ever
+              </p>
+            </div>
           </div>
         </div>
 
