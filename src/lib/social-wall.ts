@@ -138,14 +138,17 @@ const FALLBACK_WALL_PHOTOS = [
 export const getWallFeed = createServerFn({ method: "GET" })
   .validator((input: unknown) => {
     const v = (input ?? {}) as Record<string, unknown>;
-    const page = Math.max(1, Math.min(50, Number(v["page"] ?? 1) || 1));
-    return { page };
+    const page = Math.max(1, Math.min(500, Number(v["page"] ?? 1) || 1));
+    const rawSize = Number(v["pageSize"] ?? 9) || 9;
+    // Landing preview uses 4; the social page paginates at 12. Hard cap keeps
+    // any caller from requesting the whole collection in one shot.
+    const pageSize = Math.max(1, Math.min(24, rawSize));
+    return { page, pageSize };
   })
   .handler(async ({ data }): Promise<{ posts: WallPost[]; hasMore: boolean }> => {
     // The browser identity that liked these — set from localStorage by the client.
     const liked = new Set<string>();
 
-    const PAGE_SIZE = 9;
     const { getAnyCollection } = await import("@/lib/db");
     const mediaCol = await getAnyCollection("media");
     const likeCol = await getAnyCollection("photo_likes");
@@ -153,8 +156,7 @@ export const getWallFeed = createServerFn({ method: "GET" })
 
     // Fetch one page plus a sentinel so the client knows whether to offer
     // "load more" — never the whole collection.
-    const total = Math.max(1, await mediaCol.countDocuments({}));
-    const start = (data.page - 1) * PAGE_SIZE;
+    const start = (data.page - 1) * data.pageSize;
     let photos: Array<{
       publicId: string;
       url: string;
@@ -173,10 +175,10 @@ export const getWallFeed = createServerFn({ method: "GET" })
         .find({})
         .sort({ createdAt: -1 })
         .skip(start)
-        .limit(PAGE_SIZE + 1)
+        .limit(data.pageSize + 1)
         .toArray();
-      hasMore = docs.length > PAGE_SIZE;
-      photos = docs.slice(0, PAGE_SIZE).map((d) => ({
+      hasMore = docs.length > data.pageSize;
+      photos = docs.slice(0, data.pageSize).map((d) => ({
         publicId: String(d.publicId ?? ""),
         url: String(d.url ?? ""),
         width: Number(d.width ?? 0),
