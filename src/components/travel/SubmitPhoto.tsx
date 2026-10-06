@@ -186,7 +186,10 @@ export function SubmitPhoto() {
   }
 
   return (
-    <form onSubmit={submit} className="w-full max-w-lg border border-line bg-card p-6 sm:p-8">
+    <form
+      onSubmit={submit}
+      className="w-full max-w-lg border border-line bg-card p-6 text-foreground sm:p-8"
+    >
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-serif text-2xl">Share your moment</p>
@@ -274,7 +277,7 @@ export function SubmitPhoto() {
             maxLength={60}
             placeholder="How should we credit you?"
             aria-invalid={hasLink(author)}
-            className={`mt-2 w-full border bg-background px-3 py-2 text-sm outline-none transition-colors ${
+            className={`mt-2 w-full border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 ${
               hasLink(author) ? "border-red-400/60" : "border-line focus:border-primary"
             }`}
           />
@@ -291,7 +294,7 @@ export function SubmitPhoto() {
             rows={3}
             placeholder="Tell us about the moment — no links, please."
             aria-invalid={linkInInput}
-            className={`mt-2 w-full resize-none border bg-background px-3 py-2 text-sm leading-relaxed outline-none transition-colors ${
+            className={`mt-2 w-full resize-none border bg-background px-3 py-2 text-sm leading-relaxed text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 ${
               linkInInput ? "border-red-400/60" : "border-line focus:border-primary"
             }`}
           />
