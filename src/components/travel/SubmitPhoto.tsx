@@ -248,6 +248,7 @@ export function SubmitPhoto() {
                 <input
                   type="file"
                   accept="image/*"
+                  id="submit-file"
                   className="sr-only"
                   onChange={(e) => pick(e.target.files?.[0] ?? null)}
                 />
