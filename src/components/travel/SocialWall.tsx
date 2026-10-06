@@ -7,6 +7,7 @@ import campImage from "@/assets/white-desert-camp.jpg";
 import formsImage from "@/assets/white-desert-forms.jpg";
 import contrastImage from "@/assets/black-white-desert.jpg";
 import { siteConfig } from "@/config/site";
+import { galleryUrl } from "@/lib/gallery-url";
 import { SubmitPhoto } from "@/components/travel/SubmitPhoto";
 
 /**
@@ -108,13 +109,19 @@ export function SocialWall() {
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [failed, setFailed] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const { getWallFeed } = await import("@/lib/social-wall");
-      const rows = (await getWallFeed()) as unknown as Post[];
-      setPosts(rows);
-      setCounts(Object.fromEntries(rows.map((r) => [r.publicId, r.likes])));
+      const res = (await getWallFeed({ data: { page: 1 } })) as unknown as {
+        posts: Post[];
+        hasMore: boolean;
+      };
+      setPosts(res.posts);
+      setHasMore(res.hasMore);
+      setCounts(Object.fromEntries(res.posts.map((r) => [r.publicId, r.likes])));
       setFailed(false);
     } catch {
       // Mongo unreachable → the wall still renders from the built-in photos.
@@ -122,6 +129,34 @@ export function SocialWall() {
       setFailed(true);
     }
   }, []);
+
+  // Instagram-style feed: the first page renders, "load more" appends the next
+  // page — the browser never downloads the whole archive at once.
+  const loadMore = useCallback(async () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const { getWallFeed } = await import("@/lib/social-wall");
+      const next = Math.floor((posts?.length ?? 0) / 9) + 1;
+      const res = (await getWallFeed({ data: { page: next } })) as unknown as {
+        posts: Post[];
+        hasMore: boolean;
+      };
+      setPosts((cur) => {
+        const seen = new Set((cur ?? []).map((p) => p.publicId));
+        return [...(cur ?? []), ...res.posts.filter((p) => !seen.has(p.publicId))];
+      });
+      setCounts((c) => ({
+        ...c,
+        ...Object.fromEntries(res.posts.map((r) => [r.publicId, r.likes])),
+      }));
+      setHasMore(res.hasMore);
+    } catch {
+      /* keep the current page on failure */
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [posts, loadingMore]);
 
   useEffect(() => {
     load();
@@ -243,6 +278,27 @@ export function SocialWall() {
           ))}
         </div>
 
+        {/* Pagination: one server page (9 photos) at a time — keeps the initial
+            load light no matter how large the archive grows. */}
+        {!failed && hasMore && (
+          <div className="reveal mt-10 flex justify-center">
+            <button
+              type="button"
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="inline-flex items-center gap-2 border border-primary/40 px-8 py-3 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+            >
+              {loadingMore ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading
+                </>
+              ) : (
+                "Load more photos"
+              )}
+            </button>
+          </div>
+        )}
+
         {/* Visitors submit their own photo; it waits for the owner's approval. */}
         <div className="reveal mt-16 flex justify-center">
           <SubmitPhoto />
@@ -268,7 +324,10 @@ function WallCard({
   onLike: () => void;
 }) {
   const fallback = FALLBACK_IMAGES[post.publicId];
-  const src = post.url || fallback?.src;
+  // Card-sized thumbnail from Cloudinary (f_auto/q_auto + 640w) — the raw
+  // stored original can be several MB and was what made the wall slow.
+  const rawSrc = post.url || fallback?.src || "";
+  const src = rawSrc ? galleryUrl(rawSrc, 640) : "";
   const alt = fallback?.alt ?? post.caption ?? "White Desert moment";
   const [comments, setComments] = useState<Comment[] | null>(null);
   const [name, setName] = useState("");
@@ -393,6 +452,23 @@ function WallCard({
         >
           <MessageCircle className="h-4 w-4" />
           {post.commentCount > 0 ? compact(post.commentCount) : "Comment"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            const url = `${window.location.origin}/?photo=${encodeURIComponent(post.publicId)}`;
+            if (navigator.share) {
+              navigator.share({ title: "White Desert Horizons", url }).catch(() => {});
+            } else {
+              navigator.clipboard.writeText(url).catch(() => {});
+            }
+          }}
+          aria-label="Share this post"
+          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.72rem] text-hero-foreground/75 transition-colors hover:bg-white/5"
+        >
+          <Send className="h-4 w-4" />
+          Share
         </button>
       </div>
 

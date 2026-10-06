@@ -135,16 +135,26 @@ const FALLBACK_WALL_PHOTOS = [
   },
 ] as const;
 
-export const getWallFeed = createServerFn({ method: "GET" }).handler(
-  async (): Promise<WallPost[]> => {
+export const getWallFeed = createServerFn({ method: "GET" })
+  .validator((input: unknown) => {
+    const v = (input ?? {}) as Record<string, unknown>;
+    const page = Math.max(1, Math.min(50, Number(v["page"] ?? 1) || 1));
+    return { page };
+  })
+  .handler(async ({ data }): Promise<{ posts: WallPost[]; hasMore: boolean }> => {
     // The browser identity that liked these — set from localStorage by the client.
     const liked = new Set<string>();
 
+    const PAGE_SIZE = 9;
     const { getAnyCollection } = await import("@/lib/db");
     const mediaCol = await getAnyCollection("media");
     const likeCol = await getAnyCollection("photo_likes");
     const commentCol = await getAnyCollection("gallery_comments");
 
+    // Fetch one page plus a sentinel so the client knows whether to offer
+    // "load more" — never the whole collection.
+    const total = Math.max(1, await mediaCol.countDocuments({}));
+    const start = (data.page - 1) * PAGE_SIZE;
     let photos: Array<{
       publicId: string;
       url: string;
@@ -154,12 +164,19 @@ export const getWallFeed = createServerFn({ method: "GET" }).handler(
       description: string;
       createdAt: Date;
     }> = [];
+    let hasMore = false;
     try {
       // Newest first across ALL albums — owner shots and approved community
       // submissions share one chronological feed, so the wall actually shows
       // what travelers sent in (that is the point of it).
-      const docs = await mediaCol.find({}).sort({ createdAt: -1 }).limit(12).toArray();
-      photos = docs.map((d) => ({
+      const docs = await mediaCol
+        .find({})
+        .sort({ createdAt: -1 })
+        .skip(start)
+        .limit(PAGE_SIZE + 1)
+        .toArray();
+      hasMore = docs.length > PAGE_SIZE;
+      photos = docs.slice(0, PAGE_SIZE).map((d) => ({
         publicId: String(d.publicId ?? ""),
         url: String(d.url ?? ""),
         width: Number(d.width ?? 0),
@@ -168,8 +185,10 @@ export const getWallFeed = createServerFn({ method: "GET" }).handler(
         description: String(d.description ?? ""),
         createdAt: (d.createdAt instanceof Date ? d.createdAt : new Date(0)) as Date,
       }));
+      void total;
     } catch {
       photos = [];
+      hasMore = false;
     }
 
     // Owner-authored posts carry the human voice; fall back to a stable
@@ -218,27 +237,29 @@ export const getWallFeed = createServerFn({ method: "GET" }).handler(
     for (const d of commentDocs)
       commentCounts.set(String(d.publicId), (commentCounts.get(String(d.publicId)) ?? 0) + 1);
 
-    return photos.map((p) => {
-      const social = byPhoto.get(p.publicId);
-      const author = social ? String(social["author"] ?? "") : "";
-      const handle = social ? String(social["handle"] ?? "") : "";
-      return {
-        id: p.publicId,
-        publicId: p.publicId,
-        url: p.url || "",
-        width: p.width,
-        height: p.height,
-        author: author || "",
-        handle: handle || "",
-        caption: social ? String(social["caption"] ?? "") : p.description || p.title,
-        created_at: p.createdAt.toISOString(),
-        likes: counts.get(p.publicId) ?? 0,
-        likedByMe: liked.has(p.publicId),
-        commentCount: commentCounts.get(p.publicId) ?? 0,
-      };
-    });
-  },
-);
+    return {
+      posts: photos.map((p) => {
+        const social = byPhoto.get(p.publicId);
+        const author = social ? String(social["author"] ?? "") : "";
+        const handle = social ? String(social["handle"] ?? "") : "";
+        return {
+          id: p.publicId,
+          publicId: p.publicId,
+          url: p.url || "",
+          width: p.width,
+          height: p.height,
+          author: author || "",
+          handle: handle || "",
+          caption: social ? String(social["caption"] ?? "") : p.description || p.title,
+          created_at: p.createdAt.toISOString(),
+          likes: counts.get(p.publicId) ?? 0,
+          likedByMe: liked.has(p.publicId),
+          commentCount: commentCounts.get(p.publicId) ?? 0,
+        };
+      }),
+      hasMore,
+    };
+  });
 
 export const setWallPost = createServerFn({ method: "POST" })
   .validator((input: unknown) => {
