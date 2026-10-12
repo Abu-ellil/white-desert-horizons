@@ -145,6 +145,9 @@ export function SocialFeed() {
   const [failed, setFailed] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [view, setView] = useState<"feed" | "grid">(() =>
+    window.location.search.includes("view=grid") ? "grid" : "feed",
+  );
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const load = useCallback(async () => {
@@ -275,62 +278,143 @@ export function SocialFeed() {
               No links, ever
             </p>
           </div>
+
+          {/* Feed / grid view switch */}
+          <div
+            className="ml-auto flex shrink-0 items-center gap-1 border border-white/12 p-1"
+            role="group"
+            aria-label="Layout"
+          >
+            {(
+              [
+                { key: "feed", label: "Feed", Icon: Rows3 },
+                { key: "grid", label: "Grid", Icon: LayoutGrid },
+              ] as const
+            ).map(({ key, label, Icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setView(key)}
+                aria-pressed={view === key}
+                aria-label={`${label} view`}
+                className={`grid h-8 w-8 place-items-center transition-colors ${
+                  view === key
+                    ? "bg-primary text-primary-foreground"
+                    : "text-hero-foreground/55 hover:bg-white/5 hover:text-hero-foreground"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
-      {/* Feed — single column, Instagram post shape */}
-      <div className="mx-auto max-w-[470px] px-4 py-10">
-        {failed && (
-          <p className="mb-6 text-xs text-hero-foreground/45">
-            Showing studio picks — live likes will resume once the connection is back.
-          </p>
-        )}
+      {/* Feed view — single column, Instagram post shape */}
+      {view === "feed" ? (
+        <div className="mx-auto max-w-[470px] px-4 py-10">
+          {failed && (
+            <p className="mb-6 text-xs text-hero-foreground/45">
+              Showing studio picks — live likes will resume once the connection is back.
+            </p>
+          )}
 
-        {posts === null && !failed && (
-          <p className="py-16 text-center text-sm text-hero-foreground/40">Loading…</p>
-        )}
+          {posts === null && !failed && (
+            <p className="py-16 text-center text-sm text-hero-foreground/40">Loading…</p>
+          )}
 
-        <div className="space-y-10">
-          {display.map((post) => (
-            <WallCard
-              key={post.publicId}
-              post={post}
-              liked={Boolean(liked[post.publicId])}
-              likeCount={counts[post.publicId] ?? 0}
-              expanded={openId === post.publicId}
-              onToggle={() => setOpenId((cur) => (cur === post.publicId ? null : post.publicId))}
-              onLike={() => like(post)}
-            />
-          ))}
-        </div>
-
-        {/* Sentinel + button pagination: one server page at a time. */}
-        <div ref={sentinelRef} />
-        {hasMore && (
-          <div className="mt-12 flex justify-center">
-            <button
-              type="button"
-              onClick={loadMore}
-              disabled={loadingMore}
-              className="inline-flex items-center gap-2 border border-primary/40 px-8 py-3 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
-            >
-              {loadingMore ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading
-                </>
-              ) : (
-                "Load more"
-              )}
-            </button>
+          <div className="space-y-10">
+            {display.map((post) => (
+              <WallCard
+                key={post.publicId}
+                post={post}
+                liked={Boolean(liked[post.publicId])}
+                likeCount={counts[post.publicId] ?? 0}
+                expanded={openId === post.publicId}
+                onToggle={() => setOpenId((cur) => (cur === post.publicId ? null : post.publicId))}
+                onLike={() => like(post)}
+              />
+            ))}
           </div>
-        )}
 
-        {!hasMore && posts !== null && posts.length > 0 && (
-          <p className="mt-12 text-center text-[0.62rem] uppercase tracking-[0.14em] text-hero-foreground/30">
-            You&apos;re all caught up
-          </p>
-        )}
-      </div>
+          {/* Sentinel + button pagination: one server page at a time. */}
+          <div ref={sentinelRef} />
+          {hasMore && (
+            <div className="mt-12 flex justify-center">
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="inline-flex items-center gap-2 border border-primary/40 px-8 py-3 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+              >
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading
+                  </>
+                ) : (
+                  "Load more"
+                )}
+              </button>
+            </div>
+          )}
+
+          {!hasMore && posts !== null && posts.length > 0 && (
+            <p className="mt-12 text-center text-[0.62rem] uppercase tracking-[0.14em] text-hero-foreground/30">
+              You&apos;re all caught up
+            </p>
+          )}
+        </div>
+      ) : (
+        /* Grid view — the archive as a photo wall */
+        <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+          {failed && (
+            <p className="mb-6 text-xs text-hero-foreground/45">
+              Showing studio picks — live likes will resume once the connection is back.
+            </p>
+          )}
+
+          {posts === null && !failed && (
+            <p className="py-16 text-center text-sm text-hero-foreground/40">Loading…</p>
+          )}
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {display.map((post) => (
+              <GridTile
+                key={post.publicId}
+                post={post}
+                liked={Boolean(liked[post.publicId])}
+                likeCount={counts[post.publicId] ?? 0}
+                onLike={() => like(post)}
+              />
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="mt-12 flex justify-center">
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="inline-flex items-center gap-2 border border-primary/40 px-8 py-3 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+              >
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading
+                  </>
+                ) : (
+                  "Load more"
+                )}
+              </button>
+            </div>
+          )}
+
+          {!hasMore && posts !== null && posts.length > 0 && (
+            <p className="mt-12 text-center text-[0.62rem] uppercase tracking-[0.14em] text-hero-foreground/30">
+              You&apos;re all caught up
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Floating submit button — always one tap away */}
       <button
