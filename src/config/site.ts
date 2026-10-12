@@ -20,5 +20,6 @@ export const navigation = [
   { label: "Programs", href: "/programs" },
   { label: "Why Us", href: "/#why-us" },
   { label: "Gallery", href: "/#gallery" },
+  { label: "Social", href: "/social" },
   { label: "FAQ", href: "/#faq" },
 ] as const;
