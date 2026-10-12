@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Heart, MessageCircle, Send, ShieldCheck, Loader2 } from "lucide-react";
+import {
+  Camera,
+  Heart,
+  LayoutGrid,
+  Loader2,
+  MessageCircle,
+  Plus,
+  Rows3,
+  Send,
+  ShieldCheck,
+} from "lucide-react";
 
 import heroImage from "@/assets/white-desert-hero.jpg";
 import campImage from "@/assets/white-desert-camp.jpg";
@@ -135,6 +145,7 @@ export function SocialFeed() {
   const [failed, setFailed] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -319,13 +330,88 @@ export function SocialFeed() {
             You&apos;re all caught up
           </p>
         )}
+      </div>
 
-        {/* Visitors submit their own photo; it waits for the owner's approval. */}
-        <div className="mt-16 flex justify-center">
-          <SubmitPhoto />
-        </div>
+      {/* Floating submit button — always one tap away */}
+      <button
+        type="button"
+        onClick={() => setUploadOpen(true)}
+        aria-label="Share your desert photo"
+        className="fixed bottom-6 right-6 z-40 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/40 transition-transform hover:scale-105 active:scale-95 sm:bottom-8 sm:right-8"
+      >
+        <Plus className="h-6 w-6" />
+      </button>
+
+      {/* Submission form as a modal sheet */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Share your desert photo"
+        hidden={!uploadOpen}
+        className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm sm:items-center"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setUploadOpen(false);
+        }}
+      >
+        {uploadOpen && (
+          <div className="w-full max-w-lg">
+            <SubmitPhoto open onOpenChange={(next) => setUploadOpen(next)} />
+          </div>
+        )}
       </div>
     </main>
+  );
+}
+
+function GridTile({
+  post,
+  liked,
+  likeCount,
+  onLike,
+}: {
+  post: Post;
+  liked: boolean;
+  likeCount: number;
+  onLike: () => void;
+}) {
+  const fallback = FALLBACK_IMAGES[post.publicId];
+  const rawSrc = post.url || fallback?.src || "";
+  const src = rawSrc ? galleryUrl(rawSrc, 640) : "";
+  const alt = fallback?.alt ?? post.caption ?? "White Desert moment";
+  const captionSafe = !hasLink(post.caption);
+
+  return (
+    <figure className="group relative aspect-square overflow-hidden bg-black/40">
+      {src ? (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+        />
+      ) : (
+        <div className="grid h-full place-items-center text-hero-foreground/25">
+          <Camera className="h-8 w-8" />
+        </div>
+      )}
+
+      <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        {captionSafe && post.caption && (
+          <p className="line-clamp-2 text-[0.7rem] leading-snug text-white/90">{post.caption}</p>
+        )}
+      </figcaption>
+
+      <button
+        type="button"
+        onClick={onLike}
+        aria-pressed={liked}
+        aria-label={liked ? "Unlike this photo" : "Like this photo"}
+        className="absolute right-2 top-2 flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1.5 text-[0.68rem] text-white backdrop-blur-sm transition-colors hover:bg-black/75"
+      >
+        <Heart className={`h-3.5 w-3.5 ${liked ? "fill-current text-red-400" : ""}`} />
+        {likeCount > 0 ? compact(likeCount) : ""}
+      </button>
+    </figure>
   );
 }
 

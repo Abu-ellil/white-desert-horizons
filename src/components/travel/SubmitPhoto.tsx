@@ -39,8 +39,20 @@ function hasLink(text: string): boolean {
   return LINK_PATTERNS.some((re) => re.test(text));
 }
 
-export function SubmitPhoto() {
-  const [open, setOpen] = useState(false);
+export function SubmitPhoto({
+  open: openProp,
+  onOpenChange,
+}: {
+  /** Controlled open state — when given, the component renders nothing until true. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = (next: boolean) => {
+    setInternalOpen(next);
+    onOpenChange?.(next);
+  };
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [author, setAuthor] = useState("");
@@ -163,7 +175,10 @@ export function SubmitPhoto() {
         </p>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={() => {
+            reset();
+            setOpen(false);
+          }}
           className="mt-6 text-xs uppercase tracking-[0.14em] text-primary underline underline-offset-4"
         >
           Close
