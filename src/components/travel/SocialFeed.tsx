@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Camera,
+  ChevronLeft,
+  ChevronRight,
   Heart,
   LayoutGrid,
   Loader2,
@@ -9,6 +11,7 @@ import {
   Rows3,
   Send,
   ShieldCheck,
+  X,
 } from "lucide-react";
 
 import heroImage from "@/assets/white-desert-hero.jpg";
@@ -149,6 +152,7 @@ export function SocialFeed() {
     window.location.search.includes("view=grid") ? "grid" : "feed",
   );
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -333,6 +337,9 @@ export function SocialFeed() {
                 expanded={openId === post.publicId}
                 onToggle={() => setOpenId((cur) => (cur === post.publicId ? null : post.publicId))}
                 onLike={() => like(post)}
+                onOpenPhoto={() =>
+                  setLightboxIndex(display.findIndex((p) => p.publicId === post.publicId))
+                }
               />
             ))}
           </div>
@@ -385,6 +392,9 @@ export function SocialFeed() {
                 liked={Boolean(liked[post.publicId])}
                 likeCount={counts[post.publicId] ?? 0}
                 onLike={() => like(post)}
+                onOpen={() =>
+                  setLightboxIndex(display.findIndex((p) => p.publicId === post.publicId))
+                }
               />
             ))}
           </div>
@@ -443,6 +453,19 @@ export function SocialFeed() {
           </div>
         )}
       </div>
+
+      {/* Fullscreen lightbox — swipe on touch, arrows + keyboard on desktop */}
+      {lightboxIndex !== null && display[lightboxIndex] && (
+        <SocialLightbox
+          posts={display}
+          index={lightboxIndex}
+          liked={Boolean(liked[display[lightboxIndex].publicId])}
+          likeCount={counts[display[lightboxIndex].publicId] ?? 0}
+          onLike={() => like(display[lightboxIndex] as Post)}
+          onNavigate={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </main>
   );
 }
@@ -452,11 +475,13 @@ function GridTile({
   liked,
   likeCount,
   onLike,
+  onOpen,
 }: {
   post: Post;
   liked: boolean;
   likeCount: number;
   onLike: () => void;
+  onOpen: () => void;
 }) {
   const fallback = FALLBACK_IMAGES[post.publicId];
   const rawSrc = post.url || fallback?.src || "";
@@ -465,7 +490,18 @@ function GridTile({
   const captionSafe = !hasLink(post.caption);
 
   return (
-    <figure className="group relative aspect-square overflow-hidden bg-black/40">
+    <figure
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      className="group relative aspect-square cursor-zoom-in overflow-hidden bg-black/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+    >
       {src ? (
         <img
           src={src}
@@ -487,15 +523,179 @@ function GridTile({
 
       <button
         type="button"
-        onClick={onLike}
+        onClick={(e) => {
+          e.stopPropagation();
+          onLike();
+        }}
         aria-pressed={liked}
         aria-label={liked ? "Unlike this photo" : "Like this photo"}
-        className="absolute right-2 top-2 flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1.5 text-[0.68rem] text-white backdrop-blur-sm transition-colors hover:bg-black/75"
+        className="absolute right-2 top-2 z-10 flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1.5 text-[0.68rem] text-white backdrop-blur-sm transition-colors hover:bg-black/75"
       >
         <Heart className={`h-3.5 w-3.5 ${liked ? "fill-current text-red-400" : ""}`} />
         {likeCount > 0 ? compact(likeCount) : ""}
       </button>
     </figure>
+  );
+}
+
+/**
+ * Fullscreen lightbox for the social wall — same interaction model as the
+ * /gallery lightbox: tap/swipe on touch, chevron arrows and arrow keys on
+ * desktop, Esc to close. The image is requested at 1400w from Cloudinary so
+ * the fullscreen view stays sharp without pulling the multi-MB original.
+ */
+function SocialLightbox({
+  posts,
+  index,
+  liked,
+  likeCount,
+  onLike,
+  onNavigate,
+  onClose,
+}: {
+  posts: Post[];
+  index: number;
+  liked: boolean;
+  likeCount: number;
+  onLike: () => void;
+  onNavigate: (nextIndex: number) => void;
+  onClose: () => void;
+}) {
+  const post = posts[index] as Post | undefined;
+  const hasPrev = index > 0;
+  const hasNext = index < posts.length - 1;
+
+  const goPrev = useCallback(() => {
+    if (hasPrev) onNavigate(index - 1);
+  }, [hasPrev, index, onNavigate]);
+
+  const goNext = useCallback(() => {
+    if (hasNext) onNavigate(index + 1);
+  }, [hasNext, index, onNavigate]);
+
+  // Touch swipe (mobile): track a horizontal drag and flip photos on release.
+  const touchStartX = useRef<number | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0]?.clientX ?? null;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStartX.current;
+    touchStartX.current = null;
+    if (start === null) return;
+    const endX = e.changedTouches[0]?.clientX;
+    if (endX === undefined) return;
+    const dx = endX - start;
+    if (Math.abs(dx) < 50) return; // ignore tiny drags
+    if (dx < 0) goNext();
+    else goPrev();
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") goNext(); // LTR: left arrow = next photo
+      if (e.key === "ArrowRight") goPrev();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose, goNext, goPrev]);
+
+  if (!post) return null;
+
+  const fallback = FALLBACK_IMAGES[post.publicId];
+  const rawSrc = post.url || fallback?.src || "";
+  const src = rawSrc ? galleryUrl(rawSrc, 1400) : "";
+  const alt = fallback?.alt ?? post.caption ?? "White Desert moment";
+  const captionSafe = !hasLink(post.caption);
+  const nameSafe = !hasLink(post.author);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Photo viewer"
+      className="fixed inset-0 z-[60] flex flex-col bg-black/95 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* Top bar: author, position counter, close */}
+      <div className="flex shrink-0 items-center gap-3 px-4 py-3 sm:px-6">
+        <p className="min-w-0 flex-1 truncate text-[0.78rem] font-semibold text-white/85">
+          {nameSafe && post.author ? post.author : "white desert · egypt"}
+        </p>
+        <p className="shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
+          {index + 1} / {posts.length}
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="flex h-10 w-10 shrink-0 items-center justify-center text-white/80 transition-colors hover:text-white"
+        >
+          <X className="h-6 w-6" />
+        </button>
+      </div>
+
+      {/* Stage: image fills the space between the bars */}
+      <div className="relative flex min-h-0 flex-1 items-center justify-center">
+        {hasPrev && (
+          <button
+            type="button"
+            onClick={goPrev}
+            aria-label="Previous photo"
+            className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white/90 backdrop-blur-sm transition-colors hover:border-white/50 hover:text-white sm:left-5 sm:h-12 sm:w-12"
+          >
+            <ChevronRight className="h-6 w-6 sm:h-7 sm:w-7" />
+          </button>
+        )}
+
+        {src ? (
+          <img
+            src={src}
+            alt={alt}
+            draggable={false}
+            className="max-h-full max-w-full select-none object-contain px-12 sm:px-20"
+          />
+        ) : (
+          <Camera className="h-12 w-12 text-white/25" />
+        )}
+
+        {hasNext && (
+          <button
+            type="button"
+            onClick={goNext}
+            aria-label="Next photo"
+            className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white/90 backdrop-blur-sm transition-colors hover:border-white/50 hover:text-white sm:right-5 sm:h-12 sm:w-12"
+          >
+            <ChevronLeft className="h-6 w-6 sm:h-7 sm:w-7" />
+          </button>
+        )}
+      </div>
+
+      {/* Bottom bar: caption + like */}
+      <div className="flex shrink-0 items-center gap-3 px-4 py-3 sm:px-6">
+        <p className="min-w-0 flex-1 truncate text-[0.78rem] text-white/70">
+          {captionSafe && post.caption ? post.caption : alt}
+        </p>
+        <button
+          type="button"
+          onClick={onLike}
+          aria-pressed={liked}
+          aria-label={liked ? "Unlike this post" : "Like this post"}
+          className={`flex shrink-0 items-center gap-1.5 rounded-full border border-white/15 px-3.5 py-2 text-[0.72rem] backdrop-blur-sm transition-colors ${
+            liked
+              ? "border-red-400/40 text-red-300"
+              : "text-white/80 hover:border-white/40 hover:text-red-300"
+          }`}
+        >
+          <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
+          {likeCount > 0 ? compact(likeCount) : "Like"}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -506,6 +706,7 @@ function WallCard({
   expanded,
   onToggle,
   onLike,
+  onOpenPhoto,
 }: {
   post: Post;
   liked: boolean;
@@ -513,6 +714,7 @@ function WallCard({
   expanded: boolean;
   onToggle: () => void;
   onLike: () => void;
+  onOpenPhoto: () => void;
 }) {
   const fallback = FALLBACK_IMAGES[post.publicId];
   // Card-sized thumbnail from Cloudinary (f_auto/q_auto + 640w) — the raw
@@ -602,8 +804,20 @@ function WallCard({
         </time>
       </header>
 
-      {/* Photo */}
-      <div className="relative aspect-square overflow-hidden bg-black/40">
+      {/* Photo — tap to open the fullscreen viewer */}
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="Open photo fullscreen"
+        onClick={onOpenPhoto}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onOpenPhoto();
+          }
+        }}
+        className="relative aspect-square cursor-zoom-in overflow-hidden bg-black/40"
+      >
         {src ? (
           <img
             src={src}
