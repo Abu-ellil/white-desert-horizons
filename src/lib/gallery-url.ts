@@ -34,18 +34,21 @@ function wmText(text: string): string {
  *     reliable way to get more than one line of text.
  */
 export function galleryUrl(cloudinaryUrl: string, width: number): string {
-  // Wordmark ~4.4% of delivered width, clamped 20–58px so a grid thumbnail
-  // carries a compact mark and the 1400px lightbox a legible one.
-  const mainSize = Math.max(20, Math.min(58, Math.round(width * 0.044)));
+  // Wordmark ~3% of delivered width, clamped 12–40px. The size must be small
+  // enough that the full three-line block fits inside narrow grid tiles (320px
+  // on mobile) without clipping — the block is right-anchored and extends
+  // leftward, so a too-large font pushes "whitedeserthorizons.com" off the
+  // left edge.
+  const mainSize = Math.max(12, Math.min(40, Math.round(width * 0.03)));
   const text = [WATERMARK_LINE_1, WATERMARK_LINE_2, WATERMARK_TEXT].join("\n");
 
   const layers = [
     `l_text:Arial_${mainSize}_bold:${wmText(text)}`,
     "co_rgb:ffffff",
-    "o_85",
+    "o_90",
     "g_south_east",
-    "x_20",
-    "y_20",
+    "x_8",
+    "y_10",
   ].join(",");
 
   return cloudinaryUrl.replace("/upload/", `/upload/f_auto,q_auto,w_${width}/${layers}/`);
