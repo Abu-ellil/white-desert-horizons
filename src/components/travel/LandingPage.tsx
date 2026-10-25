@@ -113,6 +113,77 @@ const values = [
   ],
 ] as const;
 
+const HERO_SLIDE_MS = 7000;
+
+type HeroSlide = {
+  kicker: string;
+  title: ReactNode;
+  description: string;
+  image: string;
+  srcSet?: string;
+  alt: string;
+};
+
+const heroSlides: HeroSlide[] = [
+  {
+    kicker: "White Desert · Egypt",
+    title: (
+      <>
+        Beyond the
+        <br />
+        <em className="font-normal">Horizon.</em>
+      </>
+    ),
+    description:
+      "Private journeys into Egypt’s White Desert—shaped by open horizons, sculpted chalk, and silence.",
+    image: heroImage,
+    srcSet: "/white-desert-hero-768.jpg 768w, /white-desert-hero-1280.jpg 1280w",
+    alt: "White Desert Egypt limestone formations glowing at sunset",
+  },
+  {
+    kicker: "Night in the wilderness",
+    title: (
+      <>
+        Beneath an
+        <br />
+        <em className="font-normal">unbroken sky.</em>
+      </>
+    ),
+    description:
+      "Firelight, Bedouin hospitality, and a private camp beneath a sky overtaken by stars.",
+    image: campImage,
+    alt: "Private lantern-lit camp among White Desert limestone formations beneath the stars",
+  },
+  {
+    kicker: "Black & White Deserts",
+    title: (
+      <>
+        Where two
+        <br />
+        <em className="font-normal">deserts meet.</em>
+      </>
+    ),
+    description:
+      "A deeper expedition from volcanic black ridges into the luminous chalk wilderness beyond.",
+    image: contrastImage,
+    alt: "Dark volcanic ridges meeting pale formations between Egypt's Black and White Deserts",
+  },
+  {
+    kicker: "Sculpted by wind",
+    title: (
+      <>
+        Forms almost
+        <br />
+        <em className="font-normal">imagined.</em>
+      </>
+    ),
+    description:
+      "Chalk formations shaped by wind into figures that feel less geology than sculpture.",
+    image: formsImage,
+    alt: "Sunlit mushroom-shaped limestone formations in Egypt's White Desert",
+  },
+];
+
 function useReveal() {
   useEffect(() => {
     const nodes = document.querySelectorAll<HTMLElement>(".reveal");
@@ -210,48 +281,70 @@ function Header() {
 }
 
 function Hero() {
+  const [slide, setSlide] = useState(0);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setTimeout(
+      () => setSlide((current) => (current + 1) % heroSlides.length),
+      HERO_SLIDE_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [slide]);
+
+  const active = heroSlides[slide]!;
+
   return (
     <section
       id="top"
       className="relative min-h-[92svh] overflow-hidden bg-hero-background text-hero-foreground"
     >
-      <img
-        src={heroImage}
-        srcSet="/white-desert-hero-768.jpg 768w, /white-desert-hero-1280.jpg 1280w"
-        sizes="100vw"
-        alt="White Desert Egypt limestone formations glowing at sunset"
-        width={1920}
-        height={1280}
-        fetchPriority="high"
-        className="hero-kenburns absolute inset-0 h-full w-full object-cover object-[57%_center]"
-      />
+      {heroSlides.map((slideData, index) => (
+        <img
+          key={slideData.kicker}
+          src={slideData.image}
+          srcSet={slideData.srcSet}
+          sizes="100vw"
+          alt={slideData.alt}
+          width={1920}
+          height={1280}
+          fetchPriority={index === 0 ? "high" : undefined}
+          loading={index === 0 ? undefined : "lazy"}
+          aria-hidden={slide !== index}
+          className={`hero-slide hero-kenburns absolute inset-0 h-full w-full object-cover object-[57%_center] ${
+            slide === index ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      ))}
       <div className="cinematic-overlay absolute inset-0" />
       <div className="hero-vignette pointer-events-none absolute inset-0" />
       <div className="hero-grain pointer-events-none absolute inset-0" aria-hidden="true" />
       <Header />
       <div className="relative z-10 mx-auto flex min-h-[92svh] max-w-[1440px] items-end px-5 pb-24 pt-40 sm:px-8 sm:pb-28 lg:px-12 lg:pb-24">
         <div className="max-w-4xl">
-          <p
-            className="hero-line mb-6 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-primary"
-            style={{ animationDelay: "150ms" }}
-          >
-            White Desert · Egypt
-          </p>
-          <h1
-            className="hero-line editorial-title text-[4.25rem] sm:text-8xl lg:text-[8.8rem]"
-            style={{ animationDelay: "300ms" }}
-          >
-            Beyond the
-            <br />
-            <em className="font-normal">Horizon.</em>
-          </h1>
+          <div key={slide}>
+            <p
+              className="hero-line mb-6 text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-primary"
+              style={{ animationDelay: "150ms" }}
+            >
+              {active.kicker}
+            </p>
+            <h1
+              className="hero-line editorial-title text-[4.25rem] sm:text-8xl lg:text-[8.8rem]"
+              style={{ animationDelay: "300ms" }}
+            >
+              {active.title}
+            </h1>
+          </div>
           <div
             className="hero-line mt-7 flex max-w-2xl flex-col gap-7 border-l border-primary pl-5 sm:mt-9 sm:flex-row sm:items-end sm:justify-between sm:pl-7"
             style={{ animationDelay: "520ms" }}
           >
-            <p className="max-w-md text-base leading-7 text-hero-foreground/80 sm:text-lg">
-              Private journeys into Egypt’s White Desert—shaped by open horizons, sculpted chalk,
-              and silence.
+            <p
+              key={slide}
+              className="hero-line max-w-md text-base leading-7 text-hero-foreground/80 sm:text-lg"
+            >
+              {active.description}
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild variant="gold" size="journey">
@@ -263,6 +356,38 @@ function Hero() {
                 <a href="#plan">Plan your journey</a>
               </Button>
             </div>
+          </div>
+          <div className="mt-10 flex items-center gap-5" role="tablist" aria-label="Hero slides">
+            {heroSlides.map((slideData, index) => (
+              <button
+                key={slideData.kicker}
+                type="button"
+                role="tab"
+                aria-selected={slide === index}
+                aria-label={`Show slide ${index + 1}: ${slideData.kicker}`}
+                onClick={() => setSlide(index)}
+                className="group flex items-center gap-2 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.22em]"
+              >
+                <span
+                  className={
+                    slide === index
+                      ? "text-primary"
+                      : "text-hero-foreground/50 transition-colors group-hover:text-hero-foreground"
+                  }
+                >
+                  0{index + 1}
+                </span>
+                <span className="relative block h-px w-8 overflow-hidden bg-hero-foreground/25 sm:w-12">
+                  {slide === index && (
+                    <span
+                      key={slide}
+                      className="hero-progress absolute inset-0 bg-primary"
+                      style={{ animationDuration: `${HERO_SLIDE_MS}ms` }}
+                    />
+                  )}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       </div>

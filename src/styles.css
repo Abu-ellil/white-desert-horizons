@@ -287,6 +287,31 @@
   }
 }
 
+/* --- Hero slideshow ------------------------------------------------------
+ * Slides are stacked absolutely; only the active one is opaque. The fade
+ * is deliberately slow (1.4 s) so a photo dissolving into the next reads
+ * as shifting light rather than a UI transition.
+ * ------------------------------------------------------------------------- */
+@utility hero-slide {
+  transition: opacity 1400ms ease;
+}
+
+/* Progress fill on the active slide indicator — duration is set inline to
+ * HERO_SLIDE_MS so the bar and the autoplay timer always agree. */
+@keyframes hero-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@utility hero-progress {
+  transform-origin: left;
+  animation: hero-progress linear forwards;
+}
+
 @utility image-shade {
   background: linear-gradient(0deg, oklch(0.12 0.01 90 / 74%) 0%, transparent 62%);
 }
@@ -340,5 +365,12 @@
     opacity: 1;
     transform: none;
     animation: none;
+  }
+  .hero-slide {
+    transition: none;
+  }
+  .hero-progress {
+    animation: none;
+    transform: scaleX(1);
   }
 }
